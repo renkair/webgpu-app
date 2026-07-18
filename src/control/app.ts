@@ -44,7 +44,7 @@ export class App {
         var running: boolean = true;
 
         this.scene.update();
-        console.log("forwards amount:", this.forwards_amount);
+
         this.scene.move_player(this.forwards_amount, this.right_amount);
 
         this.renderer.render(
