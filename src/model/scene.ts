@@ -1,28 +1,100 @@
 import {Triangle} from "./triangle.ts";
+import {Quad} from "./quad.ts";
 import {Camera} from "./camera.ts";
-import {Material} from "../view/material.ts";
-import {vec3} from "gl-matrix";
+import {vec3, mat4} from "gl-matrix";
+import {object_types} from "./definations.ts";
+import type{RenderData} from "./definations.ts";
+
 
 export class Scene{
     triangles: Triangle[];
+    quads: Quad[];
     player: Camera;
+    object_data: Float32Array;
+    triangle_count: number;
+    quad_count: number;
 
     constructor() {
         this.triangles = [];
-        this.triangles.push(
-            new Triangle(
-                [0, 0, 0],
-                0
-            )
-        );
+        this.quads = [];
+        this.object_data =  new Float32Array(16 * 1024);
+        this.triangle_count = 0;
+        this.quad_count = 0;
+
+        this.make_triangles();
+        this.make_quads();
 
         this.player = new Camera(
             [-2, 0, 0.5], 0, 0,
         );
     }
 
+    make_triangles(){
+        var i: number = 0;
+        for(var y: number = -5; y < 5; y++)
+        {
+            this.triangles.push(
+                new Triangle(
+                    [0, y, 0],
+                    0
+                )
+            );
+
+            var blank_matrix = mat4.create();
+            for(var j: number = 0; j < 16; j++)
+            {
+                this.object_data[16*i + j] = blank_matrix[j];
+            }
+            i++;
+            this.triangle_count++;
+        }
+    }
+
+    make_quads(){
+        var i: number = this.triangle_count;
+        for(var  x : number = -10; x <= 10; x++)
+        {
+            for(var y: number = -10; y <= 10; y++)
+            {
+                this.quads.push(
+                    new Quad(
+                        [x, y, 0]
+                    )
+                );
+
+                var blank_matrix = mat4.create();
+                for(var j: number = 0; j < 16; j++)
+                {
+                    this.object_data[16*i + j] = blank_matrix[j];
+                }
+                i++;
+                this.quad_count++;
+            }
+        }
+    }
+
     update(){
-        this.triangles.forEach(triangle => {triangle.update()});
+        var i: number = 0;
+        this.triangles.forEach(triangle => {
+            triangle.update();
+            var model = triangle.get_model();
+            for(var j: number = 0; j < 16; j++)
+            {
+                this.object_data[16*i + j] = model[j];
+            }
+            i++;
+        });
+
+        this.quads.forEach(quad => {
+            quad.update();
+            var model = quad.get_model();
+            for(var j: number = 0; j < 16; j++)
+            {
+                this.object_data[16*i + j] = model[j];
+            }
+            i++;
+        });
+
         this.player.update();
     }
 
@@ -53,7 +125,18 @@ export class Scene{
         return this.player;
     }
 
-    get_triangles(): Triangle[]{
-        return this.triangles;
+    get_triangles(): Float32Array{
+        return this.object_data;
+    }
+
+    get_renderables(): RenderData{
+        return {
+            view_transform: this.player.get_view(),
+            model_transforms: this.object_data,
+            object_counts: {
+                [object_types.TRIANGLE] : this.triangle_count,
+                [object_types.QUAD] : this.quad_count
+            }
+        }
     }
 }
