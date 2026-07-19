@@ -4,6 +4,7 @@ import shader from "./shaders/shader.wgsl?raw";
 import {mat4} from "gl-matrix"
 import {Material} from "./material.ts";
 import {object_types, type RenderData} from "../model/definations.ts";
+import {ObjMesh} from "./obj_mesh.ts";
 
 
 export class Renderer {
@@ -30,6 +31,7 @@ export class Renderer {
     // Assets
     triangleMesh: TriangleMesh;
     quadMesh: QuadMesh;
+    statueMesh: ObjMesh;
     triangleMaterial: Material;
     quadMaterial: Material;
     objectBuffer: GPUBuffer;
@@ -156,6 +158,8 @@ export class Renderer {
     async createAsset(){
         this.triangleMesh = new TriangleMesh(this.device);
         this.quadMesh = new QuadMesh(this.device);
+        this.statueMesh = new ObjMesh();
+        await this.statueMesh.initialize(this.device, "/assets/3dmodel/escandalosos.obj");
 
         this.triangleMaterial = new Material();
         this.quadMaterial = new Material();
@@ -222,6 +226,15 @@ export class Renderer {
             6, renderables.object_counts[object_types.QUAD], 0, objects_drawn
         );
         objects_drawn += renderables.object_counts[object_types.QUAD];
+
+        // Statue
+        renderpass.setVertexBuffer(0, this.statueMesh.buffer);
+
+        renderpass.setBindGroup(1, this.triangleMaterial.bindGroup);
+        renderpass.draw(
+            this.statueMesh.vertexCount, 1, 0, objects_drawn
+        );
+        objects_drawn += 1;
 
         renderpass.end();
 
