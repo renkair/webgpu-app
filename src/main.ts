@@ -1,4 +1,4 @@
-import {App} from "./control/app.ts";
+import {App} from "./app.ts";
 
 const canvas : HTMLCanvasElement = <HTMLCanvasElement> document.getElementById('gfx-main');
 
