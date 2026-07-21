@@ -1,5 +1,5 @@
 import {vec3, mat4, quat} from "gl-matrix";
-import {Deg2Rad} from "./math_stuff.ts";
+import {MathUtil} from "./math/MathUtil.ts";
 
 
 export class Camera {
@@ -20,9 +20,9 @@ export class Camera {
 
     update(){
         this.forwards = [
-            Math.cos(Deg2Rad(this.eulers[2])) * Math.cos(Deg2Rad(this.eulers[1])),
-            Math.sin(Deg2Rad(this.eulers[2])) * Math.cos(Deg2Rad(this.eulers[1])),
-            Math.sin(Deg2Rad(this.eulers[1]))
+            Math.cos(MathUtil.toRadians(this.eulers[2])) * Math.cos(MathUtil.toRadians(this.eulers[1])),
+            Math.sin(MathUtil.toRadians(this.eulers[2])) * Math.cos(MathUtil.toRadians(this.eulers[1])),
+            Math.sin(MathUtil.toRadians(this.eulers[1]))
         ]
 
         vec3.cross(this.right, this.forwards, [0, 0, 1]);

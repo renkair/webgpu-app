@@ -13,6 +13,8 @@ import {Texture2D} from "./texture/Texture2D.ts";
 import {Vec2} from "./math/Vec2.ts";
 import {Color} from "./math/Color.ts";
 import {Mat4x4} from "./math/Mat4x4.ts";
+import {Camera} from "./camera/Camera.ts";
+import {UniformBuffer} from "./uniform_buffers/UniformBuffer.ts";
 
 
 export class Renderer {
@@ -70,6 +72,7 @@ export class Renderer {
     async setupDevice() {
         this.adapter = <GPUAdapter> await navigator.gpu?.requestAdapter();
         this.device = <GPUDevice> await this.adapter?.requestDevice();
+        //this.device.pushErrorScope("validation");
         this.context = <GPUCanvasContext> this.canvas.getContext('webgpu');
         this.format = "bgra8unorm";
         this.context.configure({
@@ -185,19 +188,36 @@ export class Renderer {
         await this.quadMaterial.initialize(this.device, "/assets/img/texture_01.png", this.materialGroupLayout);
 
         // do my test
-        this.testPipeline = new UnlitRenderpipeline(this.device);
-        const geometry = new GeometryBuilder().createQuadGeometry();
+
+        // - transfroms buffer
+        const transfromsBuffer = new UniformBuffer(this.device, 100 * Mat4x4.BYTE_SIZE, "transforms Buffer");
+        const transforms: Array<Mat4x4> = [];
+
+        for(let i = 0; i < 100; i++){
+            const transfromMatrix = Mat4x4.translation(
+                Math.random()*10 - 5,  // -5 to 5
+                Math.random()*10 - 5,  // -5 to 5
+                Math.random()*10 + 5,   // 5 to 10
+            );
+            transforms.push(transfromMatrix);
+            transfromsBuffer.update(transfromMatrix, i * Mat4x4.BYTE_SIZE);
+        }
+
+
+        const tempCamera: Camera = new Camera(this.device);
+        //tempCamera.projectionView = Mat4x4.orthographic(-5, 5, -5, 5, 0, 1);
+        tempCamera.projectionView = Mat4x4.perspective(90, 800/600, 0.01, 10);
+        //mat4.perspective(tempCamera.projectionView, Math.PI/4, 800/600, 0.1, 10);
+        this.testPipeline = new UnlitRenderpipeline(this.device, tempCamera, transfromsBuffer);
+        const geometry = new GeometryBuilder().createCubeGeometry();
         this.geometryBuffer = new GeometryBuffer(this.device, geometry);
 
         const image = await Utilities.loadImage("/assets/img/test.jpg");
 
-        this.testPipeline.textureTilling = new Vec2(5, 5);
+        this.testPipeline.textureTilling = new Vec2(1, 1);
         this.testPipeline.diffuseTexture = await Texture2D.create(this.device, image);
-        this.testPipeline.diffuseColor = Color.red();
+        this.testPipeline.diffuseColor = Color.white();
 
-        this.testPipeline.transform = Mat4x4.createTranslationMatrix(0.2,0.2, 0.2);
-        //this.testPipeline.transform = Mat4x4.createScaleMatrix(0.5, 0.5, 0.5);
-        //this.testPipeline.transform = Mat4x4.createRotationMatrixZ(0.5);
     }
 
     async render(renderables: RenderData){
@@ -272,13 +292,14 @@ export class Renderer {
                 loadOp : "load",
                 storeOp : "store"
             }],
+            depthStencilAttachment: this.depthStencilAttachment,
         });
 
 
 
-        this.angle += 0.01;
-        this.testPipeline.transform = Mat4x4.createRotationMatrixZ(this.angle);
-        this.testPipeline.draw(renderPassEncoder, this.geometryBuffer);
+        //this.angle += 0.01;
+        //this.testPipeline.transform = Mat4x4.multiply( Mat4x4.translation(0, 0, 2), Mat4x4.rotationX(this.angle));
+        this.testPipeline.draw(renderPassEncoder, this.geometryBuffer, 100);
 
 
         renderPassEncoder.end();

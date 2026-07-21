@@ -1,5 +1,4 @@
 import {vec3, mat4, quat} from "gl-matrix";
-import {Deg2Rad} from "./math_stuff.ts";
 
 
 export class Statue {

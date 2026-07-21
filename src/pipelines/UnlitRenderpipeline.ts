@@ -6,14 +6,17 @@ import {Vec2} from "../math/Vec2.ts";
 import {Color} from "../math/Color.ts";
 import type {mat4} from "gl-matrix";
 import {Mat4x4} from "../math/Mat4x4.ts";
+import type {Camera} from "../camera/Camera.ts";
 export class UnlitRenderpipeline{
     private renderPipeline: GPURenderPipeline;
     private vertexGroupLayout:GPUBindGroupLayout; // slot 0
-    private textureBindGroupLayout: GPUBindGroupLayout; // slot 1
-    private diffuseBindGroupLayout: GPUBindGroupLayout; // slot 2
+    private projectionViewGroupLayout: GPUBindGroupLayout; // slot 1
+    private textureBindGroupLayout: GPUBindGroupLayout; // slot 2
+    private diffuseBindGroupLayout: GPUBindGroupLayout; // slot 3
     private vertexBindGroup!: GPUBindGroup; // slot 0
-    private diffuseTextureBindGroup!: GPUBindGroup; // slot 1
-    private diffuseColorBindGroup!: GPUBindGroup; // slot 2
+    private projectionViewBindGroup: GPUBindGroup; // slot 1
+    private diffuseTextureBindGroup!: GPUBindGroup; // slot 2
+    private diffuseColorBindGroup!: GPUBindGroup; // slot 3
 
     private _diffuseTexture? : Texture2D;
 
@@ -36,16 +39,10 @@ export class UnlitRenderpipeline{
         this.diffuseColorBuffer.update(value);
     }
 
-    private transformBuffer: UniformBuffer;
-    private _transform: Mat4x4 = new Mat4x4();
-    public set transform(value: Mat4x4){
-        this._transform = value;
-        this.transformBuffer.update(value);
-    }
 
 
-    constructor(private device: GPUDevice) {
-        this.transformBuffer = new UniformBuffer(device, this._transform, "Transfrom buffer");
+
+    constructor(private device: GPUDevice, private camera: Camera, private transformsBuffer: UniformBuffer) {
         this.textureTillingBuffer = new UniformBuffer(device, this._textureTilling, "texture Tilling buffer");
         this.diffuseColorBuffer = new UniformBuffer(device, this._diffuseColor, "diffuseColor Tilling buffer");
         // position
@@ -98,6 +95,16 @@ export class UnlitRenderpipeline{
             ]
         });
 
+        this.projectionViewGroupLayout = device.createBindGroupLayout({
+            entries: [
+                {
+                    binding: 0,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {}
+                }
+                ]
+        });
+
         this.textureBindGroupLayout = device.createBindGroupLayout({
             entries: [
                 {
@@ -127,8 +134,9 @@ export class UnlitRenderpipeline{
             {
                 bindGroupLayouts: [
                     this.vertexGroupLayout,  // group 0
-                    this.textureBindGroupLayout, // group 1
-                    this.diffuseBindGroupLayout // group 2
+                    this.projectionViewGroupLayout, // group 1
+                    this.textureBindGroupLayout, // group 2
+                    this.diffuseBindGroupLayout // group 3
                 ]
             }
         );
@@ -153,6 +161,12 @@ export class UnlitRenderpipeline{
             primitive : {
                 topology : "triangle-list"
             },
+            // CONFIGURE DEPTH
+            depthStencil: {
+                depthWriteEnabled: true,
+                depthCompare: "less",
+                format: "depth24plus-stencil8"
+            }
         });
 
         this.vertexBindGroup = device.createBindGroup({
@@ -161,7 +175,7 @@ export class UnlitRenderpipeline{
                 {
                     binding: 0,
                     resource: {
-                        buffer: this.transformBuffer.buffer,
+                        buffer: this.transformsBuffer.buffer,
                     }
                 },
                 {
@@ -170,6 +184,18 @@ export class UnlitRenderpipeline{
                         buffer: this.textureTillingBuffer.buffer,
                     }
                 }
+            ]
+        });
+
+        this.projectionViewBindGroup = device.createBindGroup({
+            layout: this.projectionViewGroupLayout,
+            entries: [
+                {
+                    binding: 0,
+                    resource: {
+                        buffer: this.camera.buffer.buffer,
+                    }
+                },
             ]
         });
 
@@ -185,7 +211,7 @@ export class UnlitRenderpipeline{
             ]
         })
     }
-    private createTextureBindGroup( texture: Texture2D) {
+    private createTextureBindGroup(texture: Texture2D) {
         return this.device.createBindGroup({
             layout: this.textureBindGroupLayout,
             entries: [
@@ -201,25 +227,26 @@ export class UnlitRenderpipeline{
         });
     }
 
-    public draw(renderPassEncoder: GPURenderPassEncoder, buffer: GeometryBuffer) {
+    public draw(renderPassEncoder: GPURenderPassEncoder, buffer: GeometryBuffer, instanceCount = 1) {
         renderPassEncoder.setPipeline(this.renderPipeline);
         renderPassEncoder.setVertexBuffer(0, buffer.positionBuffer);
         renderPassEncoder.setVertexBuffer(1, buffer.colorBuffer);
         renderPassEncoder.setVertexBuffer(2, buffer.texCoordsBuffer);
 
         renderPassEncoder.setBindGroup(0, this.vertexBindGroup);
-        renderPassEncoder.setBindGroup(1, this.diffuseTextureBindGroup);
-        renderPassEncoder.setBindGroup(2, this.diffuseColorBindGroup);
+        renderPassEncoder.setBindGroup(1, this.projectionViewBindGroup);
+        renderPassEncoder.setBindGroup(2, this.diffuseTextureBindGroup);
+        renderPassEncoder.setBindGroup(3, this.diffuseColorBindGroup);
 
 
         if(buffer.indicesBuffer)
         {
             renderPassEncoder.setIndexBuffer(buffer.indicesBuffer, "uint16");
-            renderPassEncoder.drawIndexed(buffer.indexCount!, 1, 0, 0);
+            renderPassEncoder.drawIndexed(buffer.indexCount!, instanceCount, 0, 0);
         }
         else
         {
-            renderPassEncoder.draw(buffer.vertexCount, 1, 0, 0);
+            renderPassEncoder.draw(buffer.vertexCount, instanceCount, 0, 0);
         }
 
     }

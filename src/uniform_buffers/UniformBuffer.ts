@@ -1,15 +1,26 @@
 export class UniformBuffer {
     public readonly buffer: GPUBuffer;
-    constructor(private device: GPUDevice, data: Float32Array, label: string) {
-        this.buffer = device.createBuffer({
-            label: label,
-            size: data.byteLength,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-        });
+    constructor(private device: GPUDevice, dataOrLength: Float32Array | number, label: string) {
+        if(typeof dataOrLength === 'number') {
+            this.buffer = device.createBuffer({
+                label: label,
+                size: dataOrLength,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+            });
+        }
+        else
+        {
+            this.buffer = device.createBuffer({
+                label: label,
+                size: dataOrLength.byteLength,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+            });
 
-        this.update(data);
+            this.update(dataOrLength);
+        }
+
     }
-    public update(data : Float32Array) {
-        this.device.queue.writeBuffer(this.buffer, 0, data);
+    public update(data : Float32Array, bufferOffset: number = 0) {
+        this.device.queue.writeBuffer(this.buffer, bufferOffset, data.buffer);
     }
 }
