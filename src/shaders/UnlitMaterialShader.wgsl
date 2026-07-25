@@ -10,7 +10,7 @@ struct VSOutput{
     @location(2) texCoord: vec2f,
 }
 @group(0) @binding(0)
-var<uniform> transform: array<mat4x4f, 100>; // or name it model matrix
+var<uniform> transform: array<mat4x4f, 1>; // or name it model matrix
 @group(0) @binding(1)
 var<uniform> textureTilling: vec2f;
 

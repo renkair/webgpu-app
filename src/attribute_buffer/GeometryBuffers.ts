@@ -1,12 +1,13 @@
 import type {Geometry} from "../geometry/Geometry.ts";
 
-export class GeometryBuffer {
+export class GeometryBuffers {
     public readonly positionBuffer: GPUBuffer;
     public readonly indicesBuffer?: GPUBuffer;
     public readonly vertexCount: number;
     public readonly indexCount?: number;
     public readonly colorBuffer: GPUBuffer;
     public readonly texCoordsBuffer: GPUBuffer;
+    public readonly normalsBuffer: GPUBuffer;
 
 
     constructor(device: GPUDevice, geometry: Geometry) {
@@ -60,6 +61,18 @@ export class GeometryBuffer {
         device.queue.writeBuffer(this.texCoordsBuffer, 0,
             geometry.texCoords.buffer, 0,
             geometry.texCoords.byteLength);
+
+
+        // NORMALs
+        this.normalsBuffer = device.createBuffer({
+            label: "normals Buffer",
+            size: geometry.normals.byteLength,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+        });
+
+        device.queue.writeBuffer(this.normalsBuffer, 0,
+            geometry.normals.buffer, 0,
+            geometry.normals.byteLength);
 
         
     }

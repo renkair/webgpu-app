@@ -7,7 +7,7 @@ import {object_types, type RenderData} from "./definations.ts";
 import {ObjMesh} from "./obj_mesh.ts";
 import {UnlitRenderpipeline} from "./pipelines/UnlitRenderpipeline.ts";
 import {GeometryBuilder} from "./geometry/GeometryBuilder.ts";
-import {GeometryBuffer} from "./attribute_buffer/GeometryBuffer.ts";
+import {GeometryBuffers} from "./attribute_buffer/GeometryBuffers.ts";
 import {Utilities} from "./Utilities.ts";
 import {Texture2D} from "./texture/Texture2D.ts";
 import {Vec2} from "./math/Vec2.ts";
@@ -15,6 +15,11 @@ import {Color} from "./math/Color.ts";
 import {Mat4x4} from "./math/Mat4x4.ts";
 import {Camera} from "./camera/Camera.ts";
 import {UniformBuffer} from "./uniform_buffers/UniformBuffer.ts";
+import {Vec3} from "./math/Vec3.ts";
+import {GeometryBuffersCollection} from "./attribute_buffer/GeometryBuffersCollection.ts";
+import {Bunny} from "./game_objects/Bunny.ts";
+import {AmbientLight} from "./lights/AmbientLight.ts";
+import {DirectionalLight} from "./lights/DirectionalLight.ts";
 
 
 export class Renderer {
@@ -46,7 +51,15 @@ export class Renderer {
     triangleMaterial: Material;
     quadMaterial: Material;
     objectBuffer: GPUBuffer;
-    geometryBuffer: GeometryBuffer;
+    geometryBuffer: GeometryBuffers;
+
+    // LIGHT
+    ambientLight: AmbientLight;
+    directionalLight: DirectionalLight;
+
+    //Scene OBJ
+    bunny1: Bunny;
+    tempCamera: Camera;
 
     angle: number = 0;
 
@@ -189,34 +202,42 @@ export class Renderer {
 
         // do my test
 
+        GeometryBuffersCollection.initialize(this.device);
+
         // - transfroms buffer
         const transfromsBuffer = new UniformBuffer(this.device, 100 * Mat4x4.BYTE_SIZE, "transforms Buffer");
         const transforms: Array<Mat4x4> = [];
 
-        for(let i = 0; i < 100; i++){
-            const transfromMatrix = Mat4x4.translation(
-                Math.random()*10 - 5,  // -5 to 5
-                Math.random()*10 - 5,  // -5 to 5
-                Math.random()*10 + 5,   // 5 to 10
-            );
-            transforms.push(transfromMatrix);
-            transfromsBuffer.update(transfromMatrix, i * Mat4x4.BYTE_SIZE);
-        }
+        const transfromMatrix = Mat4x4.translation(
+            0, 0,  0,
+        );
+        transforms.push(transfromMatrix);
+        transfromsBuffer.update(transfromMatrix, /*Buffer offset*/ 0*Mat4x4.BYTE_SIZE);
 
 
-        const tempCamera: Camera = new Camera(this.device);
-        //tempCamera.projectionView = Mat4x4.orthographic(-5, 5, -5, 5, 0, 1);
-        tempCamera.projectionView = Mat4x4.perspective(90, 800/600, 0.01, 10);
-        //mat4.perspective(tempCamera.projectionView, Math.PI/4, 800/600, 0.1, 10);
-        this.testPipeline = new UnlitRenderpipeline(this.device, tempCamera, transfromsBuffer);
-        const geometry = new GeometryBuilder().createCubeGeometry();
-        this.geometryBuffer = new GeometryBuffer(this.device, geometry);
+        this.tempCamera = new Camera(this.device, this.canvas.width/ this.canvas.height);
+        this.tempCamera.eye = new Vec3(0, 0, -20);
 
+        const view = Mat4x4.lookAt(new Vec3(0, 3, 0), new Vec3(0, 0, 3), new Vec3(0, 1, 0));
+        const perspective = Mat4x4.perspective(45, 800/600, 0.01, 10);
+
+        this.tempCamera.projectionView = Mat4x4.multiply(perspective, view);
+        // LIGHTS
+        this.ambientLight = new AmbientLight(this.device);
+        this.ambientLight.color = new Color(1, 1, 1);
+        this.ambientLight.intensity = 0.5;
+
+        this.directionalLight = new DirectionalLight(this.device);
+        this.directionalLight.color = Color.white();
+        this.directionalLight.intensity = 1.2;
+        this.directionalLight.direction = new Vec3(0, 0, 1);
+
+        // - CREATE GAME OBJECTs
         const image = await Utilities.loadImage("/assets/img/test.jpg");
-
-        this.testPipeline.textureTilling = new Vec2(1, 1);
-        this.testPipeline.diffuseTexture = await Texture2D.create(this.device, image);
-        this.testPipeline.diffuseColor = Color.white();
+        const textrue = await Texture2D.create(this.device, image);
+        this.bunny1 = new Bunny(this.device, this.tempCamera, textrue, this.ambientLight, this.directionalLight);
+        this.bunny1.position.x = -10;
+        this.bunny1.color = new Color(1, 0, 0, 1);
 
     }
 
@@ -297,9 +318,14 @@ export class Renderer {
 
 
 
-        //this.angle += 0.01;
-        //this.testPipeline.transform = Mat4x4.multiply( Mat4x4.translation(0, 0, 2), Mat4x4.rotationX(this.angle));
-        this.testPipeline.draw(renderPassEncoder, this.geometryBuffer, 100);
+
+        //// UPDATE
+        this.tempCamera.update();
+        this.bunny1.update();
+        this.ambientLight.update();
+        this.directionalLight.update();
+
+        this.bunny1.draw(renderPassEncoder);
 
 
         renderPassEncoder.end();
