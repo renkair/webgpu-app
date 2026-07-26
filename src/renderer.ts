@@ -4,7 +4,7 @@ import shader from "./shaders/shader.wgsl?raw";
 import {mat4} from "gl-matrix"
 import {Material} from "./material.ts";
 import {object_types, type RenderData} from "./definations.ts";
-import {ObjMesh} from "./obj_mesh.ts";
+import {ObjMesh} from "./geometry/obj_mesh.ts";
 import {UnlitRenderpipeline} from "./pipelines/UnlitRenderpipeline.ts";
 import {GeometryBuilder} from "./geometry/GeometryBuilder.ts";
 import {GeometryBuffers} from "./attribute_buffer/GeometryBuffers.ts";
@@ -202,7 +202,7 @@ export class Renderer {
 
         // do my test
 
-        GeometryBuffersCollection.initialize(this.device);
+        await GeometryBuffersCollection.initialize(this.device);
 
         // - transfroms buffer
         const transfromsBuffer = new UniformBuffer(this.device, 100 * Mat4x4.BYTE_SIZE, "transforms Buffer");
@@ -236,8 +236,8 @@ export class Renderer {
         const image = await Utilities.loadImage("/assets/img/test.jpg");
         const textrue = await Texture2D.create(this.device, image);
         this.bunny1 = new Bunny(this.device, this.tempCamera, textrue, this.ambientLight, this.directionalLight);
-        this.bunny1.position.x = -10;
-        this.bunny1.color = new Color(1, 0, 0, 1);
+        this.bunny1.position.y = -5;
+        this.bunny1.color = new Color(1, 1, 1, 1);
 
     }
 

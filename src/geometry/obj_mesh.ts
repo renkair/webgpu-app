@@ -1,13 +1,18 @@
 import {vec2, vec3} from "gl-matrix";
 
 export class ObjMesh{
-    buffer: GPUBuffer
-    bufferLayout: GPUVertexBufferLayout
-    v: vec3[]
-    vt: vec2[]
-    vn: vec3[]
-    vertices: Float32Array
-    vertexCount: number
+    // this class is old im gonna drop it
+    buffer: GPUBuffer;
+    bufferLayout: GPUVertexBufferLayout;
+    v: vec3[];
+    vt: vec2[];
+    vn: vec3[];
+    vertices: Float32Array;
+    vertexCount: number;
+    normals: Float32Array;
+    public getVertices(){
+        return this.vertices;
+    }
 
     constructor() {
         this.v = [];

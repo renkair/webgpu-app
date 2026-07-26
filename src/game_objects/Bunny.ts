@@ -16,7 +16,7 @@ export class Bunny{
 
     private transfrom =  Mat4x4.identity();
 
-    public scale = new Vec3(1, 5, 1);
+    public scale = new Vec3(1, 1, 1);
 
     public position = new Vec3(0, 0, 0);
 
@@ -40,7 +40,7 @@ export class Bunny{
 
     public draw(renderPassEncoder: GPURenderPassEncoder){
         this.pipeline.diffuseColor = this.color;
-        this.pipeline.draw(renderPassEncoder, GeometryBuffersCollection.cubeBuffers);
+        this.pipeline.draw(renderPassEncoder, GeometryBuffersCollection.bunnyBuffers);
 
     }
 

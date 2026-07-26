@@ -1,4 +1,5 @@
 import {Geometry} from "./Geometry.ts";
+import {ObjLoader} from "./ObjLoader.ts";
 
 export class GeometryBuilder{
     public createQuadGeometry(): Geometry{
@@ -196,5 +197,23 @@ export class GeometryBuilder{
         return new Geometry(vertices, indices, colors, texCoords, normals);
     }
 
-    
+    public async LoadObjModelGeometry(url: string) {
+        /*
+        public positions: Float32Array,
+        public indices: Uint16Array = new Uint16Array(),
+        public colors: Float32Array = new Float32Array(),
+        public texCoords: Float32Array = new Float32Array(),
+        public normals: Float32Array = new Float32Array(),
+        */
+
+        const loader = await ObjLoader.create(url);
+        const vertices = loader.getVertices();
+        const indices = loader.getIndices();
+        const vertexCount = vertices.length / 3;
+        const colors = new Float32Array(vertexCount * 4).fill(1.0);
+        const texCoords = loader.getTexCoords();
+        const normals = loader.getNormals();
+        console.log("cube:", new Geometry(vertices, indices, colors, texCoords, normals));
+        return new Geometry(vertices, indices, colors, texCoords, normals);
+    }
 }
