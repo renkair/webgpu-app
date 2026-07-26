@@ -9,10 +9,13 @@ import {Texture2D} from "../texture/Texture2D.ts";
 import type {AmbientLight} from "../lights/AmbientLight.ts";
 import {Renderpipeline} from "../pipelines/RenderPipeline.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
+import {Mat3x3} from "../math/Mat3x3.ts";
+import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
 
 export class Bunny{
     private pipeline: Renderpipeline;
     private transfromBuffer: UniformBuffer;
+    private normalMatrixBuffer: UniformBuffer;
 
     private transfrom =  Mat4x4.identity();
 
@@ -22,18 +25,33 @@ export class Bunny{
 
     public color = new Color(1, 1, 1, 1);
 
-    constructor(device : GPUDevice, camera: Camera, texture: Texture2D, ambientLight: AmbientLight, directionalLight: DirectionalLight) {
+    private angle = 0;
+
+    constructor(device : GPUDevice, camera: Camera,
+                texture: Texture2D, ambientLight: AmbientLight,
+                directionalLight: DirectionalLight, pointLights: PointLightsCollection) {
         this.transfromBuffer = new UniformBuffer(device, this.transfrom, "Bunny Transform");
-        this.pipeline = new Renderpipeline(device, camera, this.transfromBuffer, ambientLight, directionalLight);
+        this.normalMatrixBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Bunny Normal Matrix");
+        this.pipeline = new Renderpipeline(device, camera, this.transfromBuffer,
+            this.normalMatrixBuffer, ambientLight, directionalLight, pointLights);
 
 
         this.pipeline.diffuseTexture = texture;
     }
 
     public update() {
-        const  scale = Mat4x4.scale(this.scale.x, this.scale.y, this.scale.z);
+        this.angle += 0.01;
+        const scale = Mat4x4.scale(this.scale.x, this.scale.y, this.scale.z);
+        const rotation = Mat4x4.rotationY(this.angle);
         const translate = Mat4x4.translation(this.position.x, this.position.y, this.scale.z);
         this.transfrom = Mat4x4.multiply(translate, scale);
+        this.transfrom = Mat4x4.multiply(this.transfrom, rotation);
+
+        let normalMatrix = Mat3x3.fromMat4x4(this.transfrom);
+        normalMatrix = Mat3x3.transpose(this.transfrom);
+        normalMatrix = Mat3x3.inverse(normalMatrix);
+
+        this.normalMatrixBuffer.update(Mat3x3.to16AlignedMat3x3(normalMatrix));
 
         this.transfromBuffer.update(this.transfrom);
     }

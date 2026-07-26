@@ -11,6 +11,7 @@ export class GeometryBuffersCollection {
 
         const bunnyGeometry = await builder.LoadObjModelGeometry("/assets/3dmodel/lowpolyBunny.obj");
         this.bunnyBuffers = new GeometryBuffers(device, bunnyGeometry);
+
     }
 
 }

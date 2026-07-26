@@ -20,6 +20,7 @@ import {GeometryBuffersCollection} from "./attribute_buffer/GeometryBuffersColle
 import {Bunny} from "./game_objects/Bunny.ts";
 import {AmbientLight} from "./lights/AmbientLight.ts";
 import {DirectionalLight} from "./lights/DirectionalLight.ts";
+import {type PointLight, PointLightsCollection} from "./lights/PointLight.ts";
 
 
 export class Renderer {
@@ -56,6 +57,7 @@ export class Renderer {
     // LIGHT
     ambientLight: AmbientLight;
     directionalLight: DirectionalLight;
+    pointlights: PointLightsCollection;
 
     //Scene OBJ
     bunny1: Bunny;
@@ -184,8 +186,6 @@ export class Renderer {
     async createAsset(){
         this.triangleMesh = new TriangleMesh(this.device);
         this.quadMesh = new QuadMesh(this.device);
-        this.statueMesh = new ObjMesh();
-        await this.statueMesh.initialize(this.device, "/assets/3dmodel/lowpolyBunny.obj");
 
         this.triangleMaterial = new Material();
         this.quadMaterial = new Material();
@@ -232,10 +232,24 @@ export class Renderer {
         this.directionalLight.intensity = 1.2;
         this.directionalLight.direction = new Vec3(0, 0, 1);
 
+        this.pointlights = new PointLightsCollection(this.device);
+        this.pointlights.lights[0].color = new Color(1, 0, 0, 1);
+        this.pointlights.lights[0].intensity = 1;
+        this.pointlights.lights[0].position = new Vec3(4, 2, -1);
+        this.pointlights.lights[1].color = new Color(0, 1, 0, 1);
+        this.pointlights.lights[1].intensity = 1;
+        this.pointlights.lights[1].position = new Vec3(-4, 2, 1);
+        this.pointlights.lights[2].color = new Color(0, 0, 1, 1);
+        this.pointlights.lights[2].intensity = 1;
+        this.pointlights.lights[2].position = new Vec3(2, -4, 1);
+
+
+
         // - CREATE GAME OBJECTs
-        const image = await Utilities.loadImage("/assets/img/test.jpg");
-        const textrue = await Texture2D.create(this.device, image);
-        this.bunny1 = new Bunny(this.device, this.tempCamera, textrue, this.ambientLight, this.directionalLight);
+        const image = await Utilities.loadImage("/assets/img/WhiteTexture.png");
+        const texture = await Texture2D.create(this.device, image);
+        //const textrue = await Texture2D.createEmpty(this.device);
+        this.bunny1 = new Bunny(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
         this.bunny1.position.y = -5;
         this.bunny1.color = new Color(1, 1, 1, 1);
 
@@ -291,16 +305,6 @@ export class Renderer {
         renderpass.draw(
             6, renderables.object_counts[object_types.QUAD], 0, objects_drawn
         );
-        objects_drawn += renderables.object_counts[object_types.QUAD];
-
-        // Statue
-        renderpass.setVertexBuffer(0, this.statueMesh.buffer);
-
-        renderpass.setBindGroup(1, this.triangleMaterial.bindGroup);
-        renderpass.draw(
-            this.statueMesh.vertexCount, 1, 0, objects_drawn
-        );
-        objects_drawn += 1;
 
         renderpass.end();
 

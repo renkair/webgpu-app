@@ -1,0 +1,39 @@
+import {UniformBuffer} from "../uniform_buffers/UniformBuffer.ts";
+import {Color} from "../math/Color.ts";
+import {Vec3} from "../math/Vec3.ts";
+
+export class PointLight {
+    public color = new Color(1, 1, 1, 1);
+    public intensity = 1;
+    public position = new Vec3(0, 0, 0);
+}
+
+export class PointLightsCollection{
+
+    public buffer: UniformBuffer;
+
+    public lights: PointLight[] = [
+        new PointLight(),
+        new PointLight(),
+        new PointLight(),
+    ];
+
+    constructor(device: GPUDevice) {
+        this.buffer = new UniformBuffer(device, 3 * 8 * Float32Array.BYTES_PER_ELEMENT,"Point Light Buffer");
+
+    }
+
+    public update()
+    {
+        for(let i = 0; i < this.lights.length; i++){
+            this.buffer.update(new Float32Array([
+                this.lights[i].color.r, this.lights[i].color.g, this.lights[i].color.b,
+                this.lights[i].intensity,
+                this.lights[i].position.x, this.lights[i].position.y, this.lights[i].position.z,
+                0,
+            ]),
+                i * 8 * Float32Array.BYTES_PER_ELEMENT);
+        }
+    }
+
+}

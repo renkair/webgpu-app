@@ -10,9 +10,9 @@ export class Texture2D {
         return texture;
     }
 
-    public static createEmpty(device: GPUDevice): Texture2D{
+    public static async createEmpty(device: GPUDevice){
         const texture = new Texture2D(device);
-        texture.initializedFromData(new Uint8Array([255, 255, 255, 255]), 1, 1);
+        await texture.initializedFromData(new Uint8Array([0, 255, 255, 255]), 1, 1);
         return texture;
     }
 

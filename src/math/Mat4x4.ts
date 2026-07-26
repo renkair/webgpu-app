@@ -66,6 +66,20 @@ export class Mat4x4 extends Float32Array{
         return m;
     }
 
+    public static rotationY(angle: number){
+        const s = Math.sin(angle);
+        const c = Math.cos(angle);
+
+        const m = new Mat4x4();
+        m.set([
+            c, 0, s, 0,
+            0, 1, 0, 0,
+            -s, 0, c, 0,
+            0, 0, 0, 1,
+        ]);
+        return m;
+    }
+
     public static orthographic(left: number, right: number, bottom: number, top: number, near: number, far: number) : Mat4x4{
         const r0c0 = 2/(right - left);
         const r1c1 = 2/(top - bottom);

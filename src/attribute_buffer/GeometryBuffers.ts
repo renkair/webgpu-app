@@ -11,7 +11,7 @@ export class GeometryBuffers {
 
 
     constructor(device: GPUDevice, geometry: Geometry) {
-        console.log(geometry);
+        //console.log(geometry);
         // POSITIONS
         this.positionBuffer = device.createBuffer({
             label: "Position Buffer",

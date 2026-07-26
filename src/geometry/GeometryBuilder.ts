@@ -26,6 +26,14 @@ export class GeometryBuilder{
             1, 1,
             1, 0,
         ]);
+
+        let normals = new Float32Array([
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1,
+            0, 0, 1,
+        ]);
+
         return new Geometry(vertices, indices, colors, texCoords);
     }
 
@@ -198,14 +206,6 @@ export class GeometryBuilder{
     }
 
     public async LoadObjModelGeometry(url: string) {
-        /*
-        public positions: Float32Array,
-        public indices: Uint16Array = new Uint16Array(),
-        public colors: Float32Array = new Float32Array(),
-        public texCoords: Float32Array = new Float32Array(),
-        public normals: Float32Array = new Float32Array(),
-        */
-
         const loader = await ObjLoader.create(url);
         const vertices = loader.getVertices();
         const indices = loader.getIndices();
@@ -214,6 +214,14 @@ export class GeometryBuilder{
         const texCoords = loader.getTexCoords();
         const normals = loader.getNormals();
         console.log("cube:", new Geometry(vertices, indices, colors, texCoords, normals));
+        /*
+        vertices.length = 72     // 24 vertices × 3
+        normals.length = 72      // 24 vertices × 3
+        texCoords.length = 48    // 24 vertices × 2
+        colors.length = 96       // 24 vertices × 4
+        indices.length = 36      // 12 triangles × 3
+        * */
+
         return new Geometry(vertices, indices, colors, texCoords, normals);
     }
 }

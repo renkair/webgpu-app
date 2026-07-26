@@ -4,16 +4,19 @@
         v: vec3[];
         vt: vec2[];
         vn: vec3[];
+        vertices: vec3[];
         indices: number[] = [];
+        texCoords: vec2[];
+        normals: vec3[];
 
         public getVertices(): Float32Array{
-            return new Float32Array(this.v.flatMap(v=>[v[0], v[1], v[2]]));  // flat vec3[] to float32Array
+            return new Float32Array(this.vertices.flatMap(v=>[v[0], v[1], v[2]]));  // flat vec3[] to float32Array
         }
         public getTexCoords(): Float32Array{
-            return new Float32Array(this.vt.flatMap(vt=>[vt[0], vt[1]]));
+            return new Float32Array(this.texCoords.flatMap(vt=>[vt[0], vt[1]]));
         }
         public  getNormals(): Float32Array{
-            return new Float32Array(this.vn.flatMap(vn=>[vn[0], vn[1], vn[2]]));
+            return new Float32Array(this.normals.flatMap(vn=>[vn[0], vn[1], vn[2]]));
         }
         public getIndices(): Uint16Array{
             return new Uint16Array(this.indices);
@@ -23,6 +26,10 @@
             this.v = [];
             this.vt = [];
             this.vn = [];
+
+            this.vertices = [];
+            this.texCoords = [];
+            this.normals = [];
         }
 
         public static async create(url: string){
@@ -100,7 +107,7 @@
             for(var i = 1; i < 4; i++) // start index with 1 to skip 'f'
             {
                 this.read_corner(vertex_descriptions[i]);
-                console.log(vertex_descriptions[i]);
+                //console.log(vertex_descriptions[i]);
             }
 
 
@@ -112,7 +119,16 @@
                 return;
 
             const v_vt_vn = vertex_description.split("/");
-            this.indices.push(Number(v_vt_vn[0]).valueOf() - 1);
-            //console.log(Number(v_vt_vn[0]).valueOf() - 1);
+            //console.log(v_vt_vn); // array [3, 3, 1]
+
+            const vertexIndex = Number(v_vt_vn[0]) - 1;
+            const texCoordIndex = Number(v_vt_vn[1]) - 1;
+            const normalIndex = Number(v_vt_vn[2]) - 1;
+
+            this.vertices.push(this.v[vertexIndex]);
+            this.texCoords.push(this.vt[texCoordIndex]);
+            this.normals.push(this.vn[normalIndex]);
+
+            this.indices.push(this.vertices.length - 1);
         }
     }
