@@ -12,20 +12,18 @@ import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import {Mat3x3} from "../math/Mat3x3.ts";
 import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
 
-export class Bunny{
+export class Wall{
     private pipeline: Renderpipeline;
     private transfromBuffer: UniformBuffer;
     private normalMatrixBuffer: UniformBuffer;
 
     private transfrom =  Mat4x4.identity();
 
-    public scale = new Vec3(2, 5, 2);
+    public scale = new Vec3(40, 40, 1);
 
-    public position = new Vec3(0, 0, 0);
+    public position = new Vec3(0, 0, 1);
 
-    public color = new Color(1, 0, 0, 1);
-
-    private angle = 0;
+    public color = new Color(0.2, 0.2, 0.2, 1);
 
     constructor(device : GPUDevice, camera: Camera,
                 texture: Texture2D, ambientLight: AmbientLight,
@@ -40,12 +38,9 @@ export class Bunny{
     }
 
     public update() {
-        this.angle += 0.01;
         const scale = Mat4x4.scale(this.scale.x, this.scale.y, this.scale.z);
-        const rotation = Mat4x4.rotationY(this.angle);
         const translate = Mat4x4.translation(this.position.x, this.position.y, this.position.z);
         this.transfrom = Mat4x4.multiply(translate, scale);
-        this.transfrom = Mat4x4.multiply(this.transfrom, rotation);
 
         let normalMatrix = Mat3x3.fromMat4x4(this.transfrom);
         normalMatrix = Mat3x3.transpose(normalMatrix);

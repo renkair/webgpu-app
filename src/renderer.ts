@@ -21,6 +21,7 @@ import {Bunny} from "./game_objects/Bunny.ts";
 import {AmbientLight} from "./lights/AmbientLight.ts";
 import {DirectionalLight} from "./lights/DirectionalLight.ts";
 import {type PointLight, PointLightsCollection} from "./lights/PointLight.ts";
+import {Wall} from "./game_objects/Wall.ts";
 
 
 export class Renderer {
@@ -62,6 +63,7 @@ export class Renderer {
     //Scene OBJ
     bunny1: Bunny;
     tempCamera: Camera;
+    wall: Wall;
 
     angle: number = 0;
 
@@ -228,20 +230,20 @@ export class Renderer {
         this.ambientLight.intensity = 0.5;
 
         this.directionalLight = new DirectionalLight(this.device);
-        this.directionalLight.color = Color.white();
-        this.directionalLight.intensity = 1.2;
-        this.directionalLight.direction = new Vec3(0, 0, 1);
+        this.directionalLight.color = new Color(1, 1, 1, 1);
+        this.directionalLight.intensity = 1;
+        this.directionalLight.direction = new Vec3(0, 0, -1);
 
         this.pointlights = new PointLightsCollection(this.device);
         this.pointlights.lights[0].color = new Color(1, 0, 0, 1);
-        this.pointlights.lights[0].intensity = 1;
-        this.pointlights.lights[0].position = new Vec3(4, 2, -1);
+        this.pointlights.lights[0].intensity = 2;
+        this.pointlights.lights[0].position = new Vec3(4, 2, 0);
         this.pointlights.lights[1].color = new Color(0, 1, 0, 1);
-        this.pointlights.lights[1].intensity = 1;
-        this.pointlights.lights[1].position = new Vec3(-4, 2, 1);
+        this.pointlights.lights[1].intensity = 2;
+        this.pointlights.lights[1].position = new Vec3(-4, 2, 0);
         this.pointlights.lights[2].color = new Color(0, 0, 1, 1);
-        this.pointlights.lights[2].intensity = 1;
-        this.pointlights.lights[2].position = new Vec3(2, -4, 1);
+        this.pointlights.lights[2].intensity = 2;
+        this.pointlights.lights[2].position = new Vec3(2, -4, 0);
 
 
 
@@ -251,7 +253,9 @@ export class Renderer {
         //const textrue = await Texture2D.createEmpty(this.device);
         this.bunny1 = new Bunny(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
         this.bunny1.position.y = -5;
-        this.bunny1.color = new Color(1, 1, 1, 1);
+
+        this.wall = new Wall(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
+        this.wall.position = new Vec3(0, 0, 1);
 
     }
 
@@ -328,8 +332,11 @@ export class Renderer {
         this.bunny1.update();
         this.ambientLight.update();
         this.directionalLight.update();
+        this.pointlights.update();
+        this.wall.update();
 
         this.bunny1.draw(renderPassEncoder);
+        this.wall.draw(renderPassEncoder);
 
 
         renderPassEncoder.end();

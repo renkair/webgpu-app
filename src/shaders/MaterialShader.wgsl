@@ -86,6 +86,6 @@ fn materialFS(in: VSOutput) -> @location(0) vec4f{
 
     var color = textureSample(diffuseTexture, diffuseTexSampler, in.texCoord) * in.color*diffuseColor;
 
-
-    return vec4f(color.rgb * lightAmount, 1.0);
+    color = color * vec4f(lightAmount, 1.0);
+    return color;
 }
