@@ -35,6 +35,9 @@ export class Vec3 extends Float32Array{
     public static subtract(a: Vec3, b: Vec3){
         return new Vec3(a.x - b.x, a.y - b.y, a.z - b.z);
     }
+    public static add(a: Vec3, b: Vec3){
+        return new Vec3(a.x + b.x, a.y + b.y, a.z + b.z);
+    }
     public static normalize(v: Vec3): Vec3
     {
         const length = Vec3.length(v);

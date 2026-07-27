@@ -51,6 +51,8 @@ export class App {
             this.scene.get_renderables()
         );
 
+        this.renderer.moveCamera(this.forwards_amount, this.right_amount);
+
         if(running)
         {
             requestAnimationFrame(this.run);

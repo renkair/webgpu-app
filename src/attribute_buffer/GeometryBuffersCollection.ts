@@ -9,8 +9,8 @@ export class GeometryBuffersCollection {
         const geometry = builder.createCubeGeometry();
         this.cubeBuffers = new GeometryBuffers(device, geometry);
 
-        // const bunnyGeometry = await builder.LoadObjModelGeometry("/assets/3dmodel/lowpolyBunny.obj");
-        // this.bunnyBuffers = new GeometryBuffers(device, bunnyGeometry);
+        const bunnyGeometry = await builder.LoadObjModelGeometry("/assets/3dmodel/lowpolyBunny.obj");
+        this.bunnyBuffers = new GeometryBuffers(device, bunnyGeometry);
 
     }
 

@@ -12,24 +12,24 @@ import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import {Mat3x3} from "../math/Mat3x3.ts";
 import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
 
-export class Wall{
+export class Ground{
     private pipeline: Renderpipeline;
     private transfromBuffer: UniformBuffer;
     private normalMatrixBuffer: UniformBuffer;
 
     private transfrom =  Mat4x4.identity();
 
-    public scale = new Vec3(40, 40, 1);
+    public scale = new Vec3(40, 1, 40);
 
-    public position = new Vec3(0, 0, 1);
+    public position = new Vec3(0, -6, 0);
 
-    public color = new Color(0.2, 0.2, 0.2, 1);
+    public color = new Color(1, 1, 1, 1);
 
     constructor(device : GPUDevice, camera: Camera,
                 texture: Texture2D, ambientLight: AmbientLight,
                 directionalLight: DirectionalLight, pointLights: PointLightsCollection) {
-        this.transfromBuffer = new UniformBuffer(device, this.transfrom, "Wall Transform");
-        this.normalMatrixBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Wall Normal Matrix");
+        this.transfromBuffer = new UniformBuffer(device, this.transfrom, "Ground Transform");
+        this.normalMatrixBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Ground Normal Matrix");
         this.pipeline = new Renderpipeline(device, camera, this.transfromBuffer,
             this.normalMatrixBuffer, ambientLight, directionalLight, pointLights);
 

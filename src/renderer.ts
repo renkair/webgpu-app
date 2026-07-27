@@ -22,6 +22,7 @@ import {AmbientLight} from "./lights/AmbientLight.ts";
 import {DirectionalLight} from "./lights/DirectionalLight.ts";
 import {type PointLight, PointLightsCollection} from "./lights/PointLight.ts";
 import {Wall} from "./game_objects/Wall.ts";
+import {Ground} from "./game_objects/Ground.ts";
 
 
 export class Renderer {
@@ -64,6 +65,7 @@ export class Renderer {
     bunny1: Bunny;
     tempCamera: Camera;
     wall: Wall;
+    ground: Ground;
 
     angle: number = 0;
 
@@ -218,9 +220,8 @@ export class Renderer {
 
 
         this.tempCamera = new Camera(this.device, this.canvas.width/ this.canvas.height);
-        this.tempCamera.eye = new Vec3(0, 0, -20);
 
-        const view = Mat4x4.lookAt(new Vec3(0, 3, 0), new Vec3(0, 0, 3), new Vec3(0, 1, 0));
+        const view = Mat4x4.lookAt2(this.tempCamera.eye, this.tempCamera.target, this.tempCamera.up);
         const perspective = Mat4x4.perspective(45, 800/600, 0.01, 10);
 
         this.tempCamera.projectionView = Mat4x4.multiply(perspective, view);
@@ -256,6 +257,8 @@ export class Renderer {
 
         this.wall = new Wall(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
         this.wall.position = new Vec3(0, 0, 1);
+
+        this.ground = new Ground(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
 
     }
 
@@ -334,9 +337,11 @@ export class Renderer {
         this.directionalLight.update();
         this.pointlights.update();
         this.wall.update();
+        this.ground.update();
 
         this.bunny1.draw(renderPassEncoder);
-        this.wall.draw(renderPassEncoder);
+        this.ground.draw(renderPassEncoder);
+        //this.wall.draw(renderPassEncoder);
 
 
         renderPassEncoder.end();
@@ -378,5 +383,15 @@ export class Renderer {
             stencilLoadOp : "clear",
             stencilStoreOp: "discard"
         }
+    }
+
+    moveCamera(forwards_amount: number, right_amount: number){
+        this.tempCamera.eye = Vec3.add(this.tempCamera.eye, new Vec3(this.tempCamera.getForward().x * forwards_amount,
+            this.tempCamera.getForward().y * forwards_amount,
+            this.tempCamera.getForward().z * forwards_amount));
+
+        this.tempCamera.eye = Vec3.add(this.tempCamera.eye, new Vec3(this.tempCamera.getRight().x * right_amount,
+            this.tempCamera.getRight().y * right_amount,
+            this.tempCamera.getRight().z * right_amount));
     }
 }

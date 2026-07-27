@@ -19,7 +19,7 @@ export class Bunny{
 
     private transfrom =  Mat4x4.identity();
 
-    public scale = new Vec3(2, 5, 2);
+    public scale = new Vec3(0.5, 0.5, 0.5);
 
     public position = new Vec3(0, 0, 0);
 
@@ -40,7 +40,7 @@ export class Bunny{
     }
 
     public update() {
-        this.angle += 0.01;
+        //this.angle += 0.01;
         const scale = Mat4x4.scale(this.scale.x, this.scale.y, this.scale.z);
         const rotation = Mat4x4.rotationY(this.angle);
         const translate = Mat4x4.translation(this.position.x, this.position.y, this.position.z);
@@ -58,7 +58,7 @@ export class Bunny{
 
     public draw(renderPassEncoder: GPURenderPassEncoder){
         this.pipeline.diffuseColor = this.color;
-        this.pipeline.draw(renderPassEncoder, GeometryBuffersCollection.cubeBuffers);
+        this.pipeline.draw(renderPassEncoder, GeometryBuffersCollection.bunnyBuffers);
 
     }
 

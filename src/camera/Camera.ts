@@ -6,9 +6,9 @@ export class Camera {
     public buffer: UniformBuffer;
 
     // VIEW PROPERTIES
-    public eye = new Vec3(0, 0, -3);
+    public eye = new Vec3(-15, 0, -3);
     public target = new Vec3(0, 0, 0);
-    private up = new Vec3(0, 1, 0);
+    public up = new Vec3(0, 1, 0);
 
     // PERSPECTIVE PROPERTIES
     public fov = 60;
@@ -32,6 +32,17 @@ export class Camera {
         this.projectionView = Mat4x4.multiply(this.perspective, this.view);
 
         this.buffer.update(this.projectionView);
+    }
+
+    public getForward()
+    {
+        const forward = Vec3.normalize(Vec3.subtract(this.target, this.eye));
+        return forward;
+    }
+
+    public getRight(){
+        const right = Vec3.normalize(Vec3.cross( this.up, this.getForward()));
+        return right;
     }
 
 }
