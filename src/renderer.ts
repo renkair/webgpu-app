@@ -105,14 +105,20 @@ export class Renderer {
         this.directionalLight.color = new Color(1, 1, 1, 1);
         this.directionalLight.intensity = 1;
         this.directionalLight.direction = new Vec3(0, 0, -1);
+        this.directionalLight.specularColor = new Color(1, 1, 1, 1);
+        this.directionalLight.specularIntensity = 19;
 
         this.pointlights = new PointLightsCollection(this.device);
         this.pointlights.lights[0].color = new Color(1, 0, 0, 1);
         this.pointlights.lights[0].intensity = 2;
         this.pointlights.lights[0].position = new Vec3(4, 2, 0);
+        this.pointlights.lights[0].specularColor = new Color(1, 1, 1, 1);
+        this.pointlights.lights[0].specularIntensity = 4;
         this.pointlights.lights[1].color = new Color(0, 1, 0, 1);
         this.pointlights.lights[1].intensity = 2;
         this.pointlights.lights[1].position = new Vec3(-4, 2, 0);
+        this.pointlights.lights[1].specularColor = new Color(1, 1, 1, 1);
+        this.pointlights.lights[1].specularIntensity = 3;
         this.pointlights.lights[2].color = new Color(0, 0, 1, 1);
         this.pointlights.lights[2].intensity = 2;
         this.pointlights.lights[2].position = new Vec3(2, -1, 0);

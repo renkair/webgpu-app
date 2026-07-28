@@ -40,6 +40,13 @@ export class RenderPipeline {
         this.diffuseColorBuffer.update(value);
     }
 
+    private shininessBuffer: UniformBuffer;
+    private _shininess = 1024.0;
+    public set shininess(value: number){
+        this._shininess = value;
+        this.shininessBuffer.update(new Float32Array([value]));
+    }
+
 
 
 
@@ -52,6 +59,7 @@ export class RenderPipeline {
                 pointLight: PointLightsCollection) {
         this.textureTillingBuffer = new UniformBuffer(device, this._textureTilling, "texture Tilling buffer");
         this.diffuseColorBuffer = new UniformBuffer(device, this._diffuseColor, "diffuseColor Tilling buffer");
+        this.shininessBuffer = new UniformBuffer(device, this._shininess, "shininess Tilling buffer");
         // position
         const bufferLayout : Array<GPUVertexBufferLayout> = [];
         bufferLayout.push({
@@ -125,6 +133,11 @@ export class RenderPipeline {
                     binding: 0,
                     visibility: GPUShaderStage.VERTEX,
                     buffer: {}
+                },
+                {
+                    binding: 1,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {}
                 }
             ]
         });
@@ -143,6 +156,11 @@ export class RenderPipeline {
                 },
                 {
                     binding: 2,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    buffer: {}
+                },
+                {
+                    binding: 3,
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: {}
                 },
@@ -231,7 +249,7 @@ export class RenderPipeline {
                 }
             ]
         });
-
+        // TODO: rename it
         this.projectionViewBindGroup = device.createBindGroup({
             layout: this.projectionViewGroupLayout,
             entries: [
@@ -239,6 +257,12 @@ export class RenderPipeline {
                     binding: 0,
                     resource: {
                         buffer: this.camera.buffer.buffer,
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: this.camera.eyeBuffer.buffer,
                     }
                 },
             ]
@@ -266,8 +290,12 @@ export class RenderPipeline {
                     }
                 },
             ]
-        })
+        });
+        this.shininess = 500;
     }
+
+
+
     private createMaterialBindGroup(texture: Texture2D) {
         return this.device.createBindGroup({
             layout: this.materialBindGroupLayout,
@@ -284,6 +312,12 @@ export class RenderPipeline {
                     binding: 2,
                     resource: {
                         buffer: this.diffuseColorBuffer.buffer,
+                    }
+                },
+                {
+                    binding: 3,
+                    resource: {
+                        buffer: this.shininessBuffer.buffer,
                     }
                 }
             ]

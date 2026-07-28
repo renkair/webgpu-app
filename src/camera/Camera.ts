@@ -5,6 +5,7 @@ import {Vec3} from "../math/Vec3.ts";
 export class Camera {
     public buffer: UniformBuffer;
     public skyboxBuffer: UniformBuffer; // provide for skybox shader
+    public eyeBuffer: UniformBuffer; // provide for material shader specular
 
     // VIEW PROPERTIES
     public eye = new Vec3(-15, 0, -3);
@@ -26,6 +27,7 @@ export class Camera {
     constructor(device: GPUDevice, private aspectRatio: number) {
         this.buffer = new UniformBuffer(device, this.projectionView, "Camera Buffer");
         this.skyboxBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Skybox Buffer");
+        this.eyeBuffer = new UniformBuffer(device, 4 * Float32Array.BYTES_PER_ELEMENT, "Eye Buffer");
     }
 
     public update()
@@ -44,6 +46,12 @@ export class Camera {
         ]);
 
         this.skyboxBuffer.update(skyboxData);
+
+        // EYE BUFFER
+        const eyeData = new Float32Array([
+           this.eye.x, this.eye.y, this.eye.z, 0,
+        ]);
+        this.eyeBuffer.update(eyeData);
     }
 
     public getForward()

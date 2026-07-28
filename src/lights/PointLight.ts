@@ -9,6 +9,8 @@ export class PointLight {
     public attenConst = 1;
     public attenLinear = 0.1;
     public attenQuad = 0.032;
+    public specularColor: Color = new Color(1, 1, 1, 1);
+    public specularIntensity: number = 1;
 }
 
 export class PointLightsCollection{
@@ -22,7 +24,7 @@ export class PointLightsCollection{
     ];
 
     constructor(device: GPUDevice) {
-        this.buffer = new UniformBuffer(device, 3 * 12 * Float32Array.BYTES_PER_ELEMENT,"Point Light Buffer");
+        this.buffer = new UniformBuffer(device, 3 * 16 * Float32Array.BYTES_PER_ELEMENT,"Point Light Buffer");
 
     }
 
@@ -30,15 +32,28 @@ export class PointLightsCollection{
     {
         for(let i = 0; i < this.lights.length; i++){
             this.buffer.update(new Float32Array([
-                this.lights[i].color.r, this.lights[i].color.g, this.lights[i].color.b,
+                this.lights[i].color.r,
+                this.lights[i].color.g,
+                this.lights[i].color.b,
                 this.lights[i].intensity,
-                this.lights[i].position.x, this.lights[i].position.y, this.lights[i].position.z,
+
+                this.lights[i].position.x,
+                this.lights[i].position.y,
+                this.lights[i].position.z,
                 this.lights[i].attenConst,
+
                 this.lights[i].attenLinear,
                 this.lights[i].attenQuad,
-                0, 0,
+                0,
+                0,
+
+                this.lights[i].specularColor.r,
+                this.lights[i].specularColor.g,
+                this.lights[i].specularColor.b,
+                this.lights[i].specularIntensity,
+
             ]),
-                i * 12 * Float32Array.BYTES_PER_ELEMENT);
+                i * 16 * Float32Array.BYTES_PER_ELEMENT);
         }
     }
 
