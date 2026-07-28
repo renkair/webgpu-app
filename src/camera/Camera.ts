@@ -4,6 +4,7 @@ import {Vec3} from "../math/Vec3.ts";
 
 export class Camera {
     public buffer: UniformBuffer;
+    public skyboxBuffer: UniformBuffer; // provide for skybox shader
 
     // VIEW PROPERTIES
     public eye = new Vec3(-15, 0, -3);
@@ -21,8 +22,10 @@ export class Camera {
 
     private projectionView : Mat4x4 = Mat4x4.identity();
 
+
     constructor(device: GPUDevice, private aspectRatio: number) {
         this.buffer = new UniformBuffer(device, this.projectionView, "Camera Buffer");
+        this.skyboxBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Skybox Buffer");
     }
 
     public update()
@@ -32,6 +35,15 @@ export class Camera {
         this.projectionView = Mat4x4.multiply(this.perspective, this.view);
 
         this.buffer.update(this.projectionView);
+
+        // vec3<f32> required alignment 16 bytes
+        const skyboxData = new Float32Array([
+            this.getForward().x, this.getForward().y, this.getForward().z, 0,
+            this.getRight().x, this.getRight().y, this.getRight().z, 0,
+            this.up.x, this.up.y, this.up.z, 0,
+        ]);
+
+        this.skyboxBuffer.update(skyboxData);
     }
 
     public getForward()

@@ -48,6 +48,9 @@ struct PointLight{
     @location(0) color: vec3f,
     @location(1) intensity: f32,
     @location(2) position: vec3f,
+    @location(3) attenConstant: f32,
+    @location(4) attenLinear: f32,
+    @location(5) attenQuadratic: f32,
 };
 
 
@@ -81,7 +84,13 @@ fn materialFS(in: VSOutput) -> @location(0) vec4f{
     for(var i = 0; i < 3; i++){
         var lightDir = normalize(positionalLights[i].position - in.fragPos);
         var dotLight = max(dot(n, lightDir), 0.0);
-        lightAmount += positionalLights[i].color * positionalLights[i].intensity * dotLight;
+
+
+        var distance = distance(positionalLights[i].position, in.fragPos);
+        var attenuation = positionalLights[i].attenConstant + positionalLights[i].attenLinear * distance + positionalLights[i].attenQuadratic * distance * distance;
+        attenuation = 1.0/ attenuation;
+
+        lightAmount += positionalLights[i].color * positionalLights[i].intensity * dotLight * attenuation;
     }
 
     var color = textureSample(diffuseTexture, diffuseTexSampler, in.texCoord) * in.color*diffuseColor;

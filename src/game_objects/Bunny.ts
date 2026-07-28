@@ -7,13 +7,13 @@ import type {Camera} from "../camera/Camera.ts";
 import {GeometryBuffersCollection} from "../attribute_buffer/GeometryBuffersCollection.ts";
 import {Texture2D} from "../texture/Texture2D.ts";
 import type {AmbientLight} from "../lights/AmbientLight.ts";
-import {Renderpipeline} from "../pipelines/RenderPipeline.ts";
+import {RenderPipeline} from "../pipelines/RenderPipeline.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import {Mat3x3} from "../math/Mat3x3.ts";
 import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
 
 export class Bunny{
-    private pipeline: Renderpipeline;
+    private pipeline: RenderPipeline;
     private transfromBuffer: UniformBuffer;
     private normalMatrixBuffer: UniformBuffer;
 
@@ -23,7 +23,7 @@ export class Bunny{
 
     public position = new Vec3(0, 0, 0);
 
-    public color = new Color(1, 0, 0, 1);
+    public color = new Color(1, 1, 0, 1);
 
     private angle = 0;
 
@@ -32,7 +32,7 @@ export class Bunny{
                 directionalLight: DirectionalLight, pointLights: PointLightsCollection) {
         this.transfromBuffer = new UniformBuffer(device, this.transfrom, "Bunny Transform");
         this.normalMatrixBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Bunny Normal Matrix");
-        this.pipeline = new Renderpipeline(device, camera, this.transfromBuffer,
+        this.pipeline = new RenderPipeline(device, camera, this.transfromBuffer,
             this.normalMatrixBuffer, ambientLight, directionalLight, pointLights);
 
 

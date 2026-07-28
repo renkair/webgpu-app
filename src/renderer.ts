@@ -1,16 +1,6 @@
-import {TriangleMesh} from "./triangle_mesh.ts";
-import {QuadMesh} from "./quad_mesh.ts";
-import shader from "./shaders/shader.wgsl?raw";
-import {mat4} from "gl-matrix"
-import {Material} from "./material.ts";
-import {object_types, type RenderData} from "./definations.ts";
-import {ObjMesh} from "./geometry/obj_mesh.ts";
 import {UnlitRenderpipeline} from "./pipelines/UnlitRenderpipeline.ts";
-import {GeometryBuilder} from "./geometry/GeometryBuilder.ts";
-import {GeometryBuffers} from "./attribute_buffer/GeometryBuffers.ts";
 import {Utilities} from "./Utilities.ts";
 import {Texture2D} from "./texture/Texture2D.ts";
-import {Vec2} from "./math/Vec2.ts";
 import {Color} from "./math/Color.ts";
 import {Mat4x4} from "./math/Mat4x4.ts";
 import {Camera} from "./camera/Camera.ts";
@@ -23,6 +13,8 @@ import {DirectionalLight} from "./lights/DirectionalLight.ts";
 import {type PointLight, PointLightsCollection} from "./lights/PointLight.ts";
 import {Wall} from "./game_objects/Wall.ts";
 import {Ground} from "./game_objects/Ground.ts";
+import {Skybox} from "./game_objects/Skybox.ts";
+import {TextureCubemap} from "./texture/TextureCubemap.ts";
 
 
 export class Renderer {
@@ -35,26 +27,12 @@ export class Renderer {
     format: GPUTextureFormat;
 
     // Pipeline Objects
-    uniformBuffer: GPUBuffer;
-    frameGroupLayout: GPUBindGroupLayout;
-    materialGroupLayout: GPUBindGroupLayout;
-    frameBindGroup: GPUBindGroup;
-    pipeline: GPURenderPipeline;
-    testPipeline: UnlitRenderpipeline;
 
     // depth stencil stuff
     depthStencilStage: GPUDepthStencilState;
     depthStencilTexture: GPUTexture;
     depthStencilView: GPUTextureView;
     depthStencilAttachment: GPURenderPassDepthStencilAttachment;
-    // Assets
-    triangleMesh: TriangleMesh;
-    quadMesh: QuadMesh;
-    statueMesh: ObjMesh;
-    triangleMaterial: Material;
-    quadMaterial: Material;
-    objectBuffer: GPUBuffer;
-    geometryBuffer: GeometryBuffers;
 
     // LIGHT
     ambientLight: AmbientLight;
@@ -66,6 +44,7 @@ export class Renderer {
     tempCamera: Camera;
     wall: Wall;
     ground: Ground;
+    skybox: Skybox;
 
     angle: number = 0;
 
@@ -76,15 +55,9 @@ export class Renderer {
     async Initialize(){
         await this.setupDevice();
 
-        await this.makeBindGroupLayouts();
-
         await this.createAsset();
 
         await this.makeDepthStencilTextureResources();
-
-        await this.makePipeline();
-
-        await this.makeBindGroup();
 
     }
 
@@ -100,111 +73,9 @@ export class Renderer {
         });
     }
 
-    async makePipeline(){
-        this.uniformBuffer = this.device.createBuffer({
-            size: 64 * 2,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
 
-        const pipelinelayout = this.device.createPipelineLayout({
-            bindGroupLayouts: [this.frameGroupLayout, this.materialGroupLayout]
-        });
-
-        this.pipeline = this.device.createRenderPipeline({
-            label: "myOldPipeline",
-            vertex : {
-                module : this.device.createShaderModule({
-                    code : shader
-                }),
-                entryPoint : "vs_main",
-                buffers: [this.triangleMesh.bufferLayout, ]
-            },
-            fragment : {
-                module : this.device.createShaderModule({
-                    code : shader
-                }),
-                entryPoint : "fs_main",
-                targets : [{format : this.format}]
-            },
-            primitive : {
-                topology : "triangle-list"
-            },
-            layout: pipelinelayout,
-            depthStencil: this.depthStencilStage,
-        });
-    }
-    async makeBindGroupLayouts() {
-        this.frameGroupLayout = this.device.createBindGroupLayout({
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: {}
-                },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.VERTEX,
-                    buffer: {
-                        type: "read-only-storage",
-                        hasDynamicOffset : false
-                    }
-                }
-            ],
-        });
-
-        this.materialGroupLayout = this.device.createBindGroupLayout({
-            entries: [
-                {
-                    binding: 0,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    texture: {}
-                },
-                {
-                    binding: 1,
-                    visibility: GPUShaderStage.FRAGMENT,
-                    sampler: {}
-                }
-            ],
-        });
-    }
-    async makeBindGroup(){
-        this.frameBindGroup = this.device.createBindGroup({
-            layout: this.frameGroupLayout,
-            entries: [
-                {
-                    binding: 0,
-                    resource: {
-                        buffer: this.uniformBuffer
-                    }
-                },
-                {
-                    binding: 1,
-                    resource: {
-                        buffer: this.objectBuffer
-                    }
-                }
-            ]
-        })
-    }
 
     async createAsset(){
-        this.triangleMesh = new TriangleMesh(this.device);
-        this.quadMesh = new QuadMesh(this.device);
-
-        this.triangleMaterial = new Material();
-        this.quadMaterial = new Material();
-
-        const modelBufferDescriptor: GPUBufferDescriptor = {
-            size: 64 * 1024,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-
-        };
-        this.objectBuffer = this.device.createBuffer(modelBufferDescriptor);
-
-        await this.triangleMaterial.initialize(this.device, "/assets/img/test.jpg", this.materialGroupLayout);
-        await this.quadMaterial.initialize(this.device, "/assets/img/texture_01.png", this.materialGroupLayout);
-
-        // do my test
 
         await GeometryBuffersCollection.initialize(this.device);
 
@@ -244,7 +115,7 @@ export class Renderer {
         this.pointlights.lights[1].position = new Vec3(-4, 2, 0);
         this.pointlights.lights[2].color = new Color(0, 0, 1, 1);
         this.pointlights.lights[2].intensity = 2;
-        this.pointlights.lights[2].position = new Vec3(2, -4, 0);
+        this.pointlights.lights[2].position = new Vec3(2, -1, 0);
 
 
 
@@ -258,70 +129,31 @@ export class Renderer {
         this.wall = new Wall(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
         this.wall.position = new Vec3(0, 0, 1);
 
-        this.ground = new Ground(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
+        const groundImage = await Utilities.loadImage("/assets/img/texture_01.png");
+        const groundTexture = await Texture2D.create(this.device, groundImage);
+        this.ground = new Ground(this.device, this.tempCamera, groundTexture, this.ambientLight, this.directionalLight, this.pointlights);
+
+        // - SKYBOX
+        const textureCubemap = new TextureCubemap(this.device);
+        await textureCubemap.initialize();
+        if (!textureCubemap) {
+            console.log("error to creat cubemap");
+        }
+        this.skybox = new Skybox(this.device, this.tempCamera, textureCubemap);
 
     }
 
-    async render(renderables: RenderData){
-
-        const projection = mat4.create();
-        mat4.perspective(projection, Math.PI/4, 800/600, 0.1, 10);
-
-        const view = renderables.view_transform;
-
-
-        this.device.queue.writeBuffer(this.objectBuffer,
-            0, renderables.model_transforms,
-            0, renderables.model_transforms.length);
-
-        this.device.queue.writeBuffer(this.uniformBuffer, 0, <ArrayBuffer>view);
-        this.device.queue.writeBuffer(this.uniformBuffer, 64, <ArrayBuffer>projection);
+    async render(){
 
         const commandEncoder : GPUCommandEncoder = this.device.createCommandEncoder();
         const textureView : GPUTextureView = this.context.getCurrentTexture().createView();
 
-        const renderpass : GPURenderPassEncoder = commandEncoder.beginRenderPass({
-            colorAttachments : [{
-                view: textureView,
-                clearValue: {r: 0.5, g: 0.0, b : 0.25, a : 1.0},
-                loadOp : "clear",
-                storeOp : "store"
-            }],
-            depthStencilAttachment: this.depthStencilAttachment,
-        });
-
-        renderpass.setPipeline(this.pipeline);
-        renderpass.setBindGroup(0, this.frameBindGroup);
-
-        var objects_drawn: number = 0;
-
-        // Triangles
-        renderpass.setVertexBuffer(0, this.triangleMesh.buffer);
-
-        renderpass.setBindGroup(1, this.triangleMaterial.bindGroup);
-        renderpass.draw(
-            3, renderables.object_counts[object_types.TRIANGLE], 0, objects_drawn
-        );
-        objects_drawn += renderables.object_counts[object_types.TRIANGLE];
-
-        // Quads
-
-        renderpass.setVertexBuffer(0, this.quadMesh.buffer);
-
-        renderpass.setBindGroup(1, this.quadMaterial.bindGroup);
-        renderpass.draw(
-            6, renderables.object_counts[object_types.QUAD], 0, objects_drawn
-        );
-
-        renderpass.end();
-
-        //this.device.queue.submit([commandEncoder.finish()]);
         /// do my test
         const renderPassEncoder : GPURenderPassEncoder = commandEncoder.beginRenderPass({
             colorAttachments : [{
                 view: textureView,
-                clearValue: {r: 0.5, g: 0.0, b : 0.25, a : 1.0},
-                loadOp : "load",
+                clearValue: {r: 0, g: 0.5, b : 0.5, a : 1.0},
+                loadOp : "clear",
                 storeOp : "store"
             }],
             depthStencilAttachment: this.depthStencilAttachment,
@@ -338,9 +170,11 @@ export class Renderer {
         this.pointlights.update();
         this.wall.update();
         this.ground.update();
+        this.skybox.update();
 
         this.bunny1.draw(renderPassEncoder);
         this.ground.draw(renderPassEncoder);
+        this.skybox.draw(renderPassEncoder);
         //this.wall.draw(renderPassEncoder);
 
 

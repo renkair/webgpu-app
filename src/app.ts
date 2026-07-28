@@ -1,11 +1,9 @@
 import {Renderer} from "./renderer.ts";
-import {Scene} from "./scene.ts";
 import $ from "jquery"
 
 export class App {
     canvas: HTMLCanvasElement;
     renderer: Renderer;
-    scene: Scene;
 
     keyLabel: HTMLElement;
     mouseXLabel: HTMLElement;
@@ -17,7 +15,6 @@ export class App {
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.renderer = new Renderer(canvas);
-        this.scene = new Scene();
 
         this.forwards_amount = 0;
         this.right_amount = 0;
@@ -43,13 +40,8 @@ export class App {
     run = () =>{
         var running: boolean = true;
 
-        this.scene.update();
 
-        this.scene.move_player(this.forwards_amount, this.right_amount);
-
-        this.renderer.render(
-            this.scene.get_renderables()
-        );
+        this.renderer.render();
 
         this.renderer.moveCamera(this.forwards_amount, this.right_amount);
 
@@ -106,8 +98,8 @@ export class App {
         this.mouseXLabel.innerText = event.clientX.toString();
         this.mouseYLabel.innerText = event.clientY.toString();
 
-        this.scene.spin_player(
-            event.movementX / 5, -event.movementY / 5
-        );
+        // this.scene.spin_player(
+        //     event.movementX / 5, -event.movementY / 5
+        // );
     }
 }

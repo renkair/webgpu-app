@@ -1,14 +1,14 @@
 struct Camera
 {
-    forward: vec3<f32>,
+    forwards: vec3<f32>,
     right: vec3<f32>,
-    up: vec3<f32>
+    up: vec3<f32>,
 };
 
 
-@binding(0) @group(0) var<uniform> camera: Camera;
-@binding(1) @group(0) var skyTexture: texture_cube<f32>;
-@binding(2) @group(0) var skySampler: sampler;
+@group(0) @binding(0) var<uniform> camera: Camera;
+@group(0) @binding(1) var skyTexture: texture_cube<f32>;
+@group(0) @binding(2) var skySampler: sampler;
 
 struct VertexOutput{
     @builtin(position) Position : vec4<f32>,
@@ -31,7 +31,7 @@ fn sky_vert_main(@builtin(vertex_index) VertexIndex: u32) -> VertexOutput{
     var x: f32 = positions[VertexIndex].x;
     var y: f32 = positions[VertexIndex].y;
 
-    output.direction = normalize(camera.forwards + x*camera.right*y + y*camera.up);
+    output.direction = normalize(camera.forwards + x * camera.right + y * camera.up);
     return output;
 }
 

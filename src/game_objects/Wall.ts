@@ -7,13 +7,13 @@ import type {Camera} from "../camera/Camera.ts";
 import {GeometryBuffersCollection} from "../attribute_buffer/GeometryBuffersCollection.ts";
 import {Texture2D} from "../texture/Texture2D.ts";
 import type {AmbientLight} from "../lights/AmbientLight.ts";
-import {Renderpipeline} from "../pipelines/RenderPipeline.ts";
+import {RenderPipeline} from "../pipelines/RenderPipeline.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import {Mat3x3} from "../math/Mat3x3.ts";
 import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
 
 export class Wall{
-    private pipeline: Renderpipeline;
+    private pipeline: RenderPipeline;
     private transfromBuffer: UniformBuffer;
     private normalMatrixBuffer: UniformBuffer;
 
@@ -30,7 +30,7 @@ export class Wall{
                 directionalLight: DirectionalLight, pointLights: PointLightsCollection) {
         this.transfromBuffer = new UniformBuffer(device, this.transfrom, "Wall Transform");
         this.normalMatrixBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Wall Normal Matrix");
-        this.pipeline = new Renderpipeline(device, camera, this.transfromBuffer,
+        this.pipeline = new RenderPipeline(device, camera, this.transfromBuffer,
             this.normalMatrixBuffer, ambientLight, directionalLight, pointLights);
 
 

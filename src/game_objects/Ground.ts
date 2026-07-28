@@ -1,4 +1,3 @@
-import {UnlitRenderpipeline} from "../pipelines/UnlitRenderpipeline.ts";
 import {UniformBuffer} from "../uniform_buffers/UniformBuffer.ts";
 import {Mat4x4} from "../math/Mat4x4.ts";
 import {Vec3} from "../math/Vec3.ts";
@@ -7,13 +6,13 @@ import type {Camera} from "../camera/Camera.ts";
 import {GeometryBuffersCollection} from "../attribute_buffer/GeometryBuffersCollection.ts";
 import {Texture2D} from "../texture/Texture2D.ts";
 import type {AmbientLight} from "../lights/AmbientLight.ts";
-import {Renderpipeline} from "../pipelines/RenderPipeline.ts";
+import {RenderPipeline} from "../pipelines/RenderPipeline.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import {Mat3x3} from "../math/Mat3x3.ts";
 import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
 
 export class Ground{
-    private pipeline: Renderpipeline;
+    private pipeline: RenderPipeline;
     private transfromBuffer: UniformBuffer;
     private normalMatrixBuffer: UniformBuffer;
 
@@ -21,7 +20,7 @@ export class Ground{
 
     public scale = new Vec3(40, 1, 40);
 
-    public position = new Vec3(0, -6, 0);
+    public position = new Vec3(0, -5, 0);
 
     public color = new Color(1, 1, 1, 1);
 
@@ -30,7 +29,7 @@ export class Ground{
                 directionalLight: DirectionalLight, pointLights: PointLightsCollection) {
         this.transfromBuffer = new UniformBuffer(device, this.transfrom, "Ground Transform");
         this.normalMatrixBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Ground Normal Matrix");
-        this.pipeline = new Renderpipeline(device, camera, this.transfromBuffer,
+        this.pipeline = new RenderPipeline(device, camera, this.transfromBuffer,
             this.normalMatrixBuffer, ambientLight, directionalLight, pointLights);
 
 

@@ -1,4 +1,4 @@
-import unlitMaterialShader from "../shaders/MaterialShader.wgsl?raw";
+import materialShader from "../shaders/MaterialShader.wgsl?raw";
 import type {GeometryBuffers} from "../attribute_buffer/GeometryBuffers.ts";
 import type {Texture2D} from "../texture/Texture2D.ts";
 import {UniformBuffer} from "../uniform_buffers/UniformBuffer.ts";
@@ -8,7 +8,7 @@ import type {Camera} from "../camera/Camera.ts";
 import type {AmbientLight} from "../lights/AmbientLight.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import type {PointLightsCollection} from "../lights/PointLight.ts";
-export class Renderpipeline{
+export class RenderPipeline {
     private renderPipeline: GPURenderPipeline;
     private vertexGroupLayout:GPUBindGroupLayout; // slot 0
     private projectionViewGroupLayout: GPUBindGroupLayout; // slot 1
@@ -186,13 +186,13 @@ export class Renderpipeline{
             vertex : {
                 buffers: bufferLayout,
                 module : device.createShaderModule({
-                    code : unlitMaterialShader
+                    code : materialShader
                 }),
                 entryPoint : "materialVS",
             },
             fragment : {
                 module : device.createShaderModule({
-                    code : unlitMaterialShader
+                    code : materialShader
                 }),
                 entryPoint : "materialFS",
                 targets : [{format : "bgra8unorm"}]
