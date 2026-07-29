@@ -10,9 +10,10 @@ import {RenderPipeline} from "../pipelines/RenderPipeline.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import {Mat3x3} from "../math/Mat3x3.ts";
 import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
+import type {ShadowCamera} from "../camera/ShadowCamera.ts";
 
 export class Ground{
-    private pipeline: RenderPipeline;
+    public pipeline: RenderPipeline;
     private transfromBuffer: UniformBuffer;
     private normalMatrixBuffer: UniformBuffer;
 
@@ -24,12 +25,12 @@ export class Ground{
 
     public color = new Color(1, 1, 1, 1);
 
-    constructor(device : GPUDevice, camera: Camera,
+    constructor(device : GPUDevice, camera: Camera, shadowCamera: ShadowCamera,
                 texture: Texture2D, ambientLight: AmbientLight,
                 directionalLight: DirectionalLight, pointLights: PointLightsCollection) {
         this.transfromBuffer = new UniformBuffer(device, this.transfrom, "Ground Transform");
         this.normalMatrixBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Ground Normal Matrix");
-        this.pipeline = new RenderPipeline(device, camera, this.transfromBuffer,
+        this.pipeline = new RenderPipeline(device, camera, shadowCamera, this.transfromBuffer,
             this.normalMatrixBuffer, ambientLight, directionalLight, pointLights);
 
 

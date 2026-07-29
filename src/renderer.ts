@@ -15,6 +15,7 @@ import {Wall} from "./game_objects/Wall.ts";
 import {Ground} from "./game_objects/Ground.ts";
 import {Skybox} from "./game_objects/Skybox.ts";
 import {TextureCubemap} from "./texture/TextureCubemap.ts";
+import {ShadowCamera} from "./camera/ShadowCamera.ts";
 
 
 export class Renderer {
@@ -34,6 +35,8 @@ export class Renderer {
     depthStencilView: GPUTextureView;
     depthStencilAttachment: GPURenderPassDepthStencilAttachment;
 
+    shadowTexture : Texture2D;
+
     // LIGHT
     ambientLight: AmbientLight;
     directionalLight: DirectionalLight;
@@ -41,7 +44,8 @@ export class Renderer {
 
     //Scene OBJ
     bunny1: Bunny;
-    tempCamera: Camera;
+    camera: Camera;
+    shadowCamera: ShadowCamera;
     wall: Wall;
     ground: Ground;
     skybox: Skybox;
@@ -89,22 +93,25 @@ export class Renderer {
         transforms.push(transfromMatrix);
         transfromsBuffer.update(transfromMatrix, /*Buffer offset*/ 0*Mat4x4.BYTE_SIZE);
 
-
-        this.tempCamera = new Camera(this.device, this.canvas.width/ this.canvas.height);
-
-        const view = Mat4x4.lookAt2(this.tempCamera.eye, this.tempCamera.target, this.tempCamera.up);
+        // CAMERA
+        this.camera = new Camera(this.device, this.canvas.width/ this.canvas.height);
+        const view = Mat4x4.lookAt2(this.camera.eye, this.camera.target, this.camera.up);
         const perspective = Mat4x4.perspective(45, 800/600, 0.01, 10);
+        this.camera.projectionView = Mat4x4.multiply(perspective, view);
 
-        this.tempCamera.projectionView = Mat4x4.multiply(perspective, view);
+        this.shadowCamera = new ShadowCamera(this.device);
+        this.shadowCamera.eye = new Vec3(0, 0, -20); // assume it is directional light position
+
+
         // LIGHTS
         this.ambientLight = new AmbientLight(this.device);
         this.ambientLight.color = new Color(1, 1, 1);
-        this.ambientLight.intensity = 0.5;
+        this.ambientLight.intensity = 0.34;
 
         this.directionalLight = new DirectionalLight(this.device);
         this.directionalLight.color = new Color(1, 1, 1, 1);
         this.directionalLight.intensity = 1;
-        this.directionalLight.direction = new Vec3(0, 0, -1);
+        this.directionalLight.direction = new Vec3(0, 0, 1);
         this.directionalLight.specularColor = new Color(1, 1, 1, 1);
         this.directionalLight.specularIntensity = 19;
 
@@ -125,19 +132,27 @@ export class Renderer {
 
 
 
-        // - CREATE GAME OBJECTs
+        // CREATE GAME OBJECTs
         const image = await Utilities.loadImage("/assets/img/WhiteTexture.png");
         const texture = await Texture2D.create(this.device, image);
         //const textrue = await Texture2D.createEmpty(this.device);
-        this.bunny1 = new Bunny(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
+
+
+        this.shadowTexture = Texture2D.createShadowTexture(this.device, this.canvas.width, this.canvas.height);
+
+        // - BUNNY
+        this.bunny1 = new Bunny(this.device, this.camera, this.shadowCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
         this.bunny1.position.y = -5;
-
-        this.wall = new Wall(this.device, this.tempCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
+        this.bunny1.pipeline.shadowTexture = this.shadowTexture;
+        // - WALL
+        this.wall = new Wall(this.device, this.camera, this.shadowCamera, texture, this.ambientLight, this.directionalLight, this.pointlights);
         this.wall.position = new Vec3(0, 0, 1);
+        this.wall.pipeline.shadowTexture = this.shadowTexture;
 
-        const groundImage = await Utilities.loadImage("/assets/img/texture_01.png");
+        const groundImage = await Utilities.loadImage("/assets/img/texture_07.png");
         const groundTexture = await Texture2D.create(this.device, groundImage);
-        this.ground = new Ground(this.device, this.tempCamera, groundTexture, this.ambientLight, this.directionalLight, this.pointlights);
+        this.ground = new Ground(this.device, this.camera, this.shadowCamera, groundTexture, this.ambientLight, this.directionalLight, this.pointlights);
+        this.ground.pipeline.shadowTexture = this.shadowTexture;
 
         // - SKYBOX
         const textureCubemap = new TextureCubemap(this.device);
@@ -145,16 +160,34 @@ export class Renderer {
         if (!textureCubemap) {
             console.log("error to creat cubemap");
         }
-        this.skybox = new Skybox(this.device, this.tempCamera, textureCubemap);
+        this.skybox = new Skybox(this.device, this.camera, textureCubemap);
+
+
 
     }
 
-    async render(){
 
-        const commandEncoder : GPUCommandEncoder = this.device.createCommandEncoder();
+    shadowPass = (commandEncoder: GPUCommandEncoder) => {
+        const renderPassEncoder = commandEncoder.beginRenderPass({
+            colorAttachments: [],
+            // CONFIGURE DEPTH
+            depthStencilAttachment: {
+                view: this.shadowTexture.texture.createView(),
+                depthLoadOp : "clear",
+                depthStoreOp : "store",
+                depthClearValue : 1.0,
+                stencilReadOnly : true,
+            },
+        });
+
+        // DRAW HERE
+        this.bunny1.drawShadows(renderPassEncoder);
+
+        renderPassEncoder.end();
+    }
+
+    scenePass = (commandEncoder: GPUCommandEncoder) => {
         const textureView : GPUTextureView = this.context.getCurrentTexture().createView();
-
-        /// do my test
         const renderPassEncoder : GPURenderPassEncoder = commandEncoder.beginRenderPass({
             colorAttachments : [{
                 view: textureView,
@@ -166,10 +199,9 @@ export class Renderer {
         });
 
 
-
-
         //// UPDATE
-        this.tempCamera.update();
+        this.camera.update();
+        this.shadowCamera.update();
         this.bunny1.update();
         this.ambientLight.update();
         this.directionalLight.update();
@@ -185,6 +217,15 @@ export class Renderer {
 
 
         renderPassEncoder.end();
+    }
+
+    async render(){
+
+        const commandEncoder : GPUCommandEncoder = this.device.createCommandEncoder();
+
+        this.scenePass(commandEncoder);
+
+        this.shadowPass(commandEncoder);
 
         this.device.queue.submit([commandEncoder.finish()]);
 
@@ -226,12 +267,14 @@ export class Renderer {
     }
 
     moveCamera(forwards_amount: number, right_amount: number){
-        this.tempCamera.eye = Vec3.add(this.tempCamera.eye, new Vec3(this.tempCamera.getForward().x * forwards_amount,
-            this.tempCamera.getForward().y * forwards_amount,
-            this.tempCamera.getForward().z * forwards_amount));
+        this.camera.eye = Vec3.add(this.camera.eye, new Vec3(this.camera.getForward().x * forwards_amount,
+            this.camera.getForward().y * forwards_amount,
+            this.camera.getForward().z * forwards_amount));
 
-        this.tempCamera.eye = Vec3.add(this.tempCamera.eye, new Vec3(this.tempCamera.getRight().x * right_amount,
-            this.tempCamera.getRight().y * right_amount,
-            this.tempCamera.getRight().z * right_amount));
+        this.camera.eye = Vec3.add(this.camera.eye, new Vec3(this.camera.getRight().x * right_amount,
+            this.camera.getRight().y * right_amount,
+            this.camera.getRight().z * right_amount));
     }
+
+
 }

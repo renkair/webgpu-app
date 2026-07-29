@@ -1,7 +1,10 @@
 export class Texture2D {
     public texture!: GPUTexture;
     public sampler!: GPUSampler;
-    constructor(private device: GPUDevice) {
+    constructor(private device: GPUDevice, texture: GPUTexture|null = null) {
+        if(texture){
+            this.texture = texture;
+        }
     }
 
     public static async create(device: GPUDevice, image: HTMLImageElement){
@@ -10,9 +13,9 @@ export class Texture2D {
         return texture;
     }
 
-    public static async createEmpty(device: GPUDevice){
+    public static createEmpty(device: GPUDevice): Texture2D {
         const texture = new Texture2D(device);
-        await texture.initializedFromData(new Uint8Array([0, 255, 255, 255]), 1, 1);
+        texture.initializedFromData(new Uint8Array([255, 255, 255, 255]), 1, 1);
         return texture;
     }
 
@@ -54,4 +57,39 @@ export class Texture2D {
             {width, height}
         );
     }
+
+    public static createDepthTexture(device: GPUDevice , width: number, height: number) {
+        const depthTexture = device.createTexture({
+            label: "Depth Texture",
+            size: {
+                width: width,
+                height: height,
+            },
+            format: "depth32float",
+            usage: GPUTextureUsage.RENDER_ATTACHMENT
+        });
+
+        return new Texture2D(device, depthTexture);
+    }
+
+    public static createShadowTexture(device: GPUDevice, width: number, height: number){
+        const depthTexture = device.createTexture({
+            label: "Shadow Map Depth Texture",
+            size: {
+                width: width,
+                height: height,
+            },
+            format: "depth24plus-stencil8",
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
+
+        });
+        const tex = new Texture2D(device, depthTexture);
+        tex.sampler = device.createSampler({
+            compare: "less-equal",
+        });
+
+        return tex;
+    }
+
+
 }

@@ -12,6 +12,7 @@ struct VSOutput{
     @location(3) normal: vec3f,
     @location(4) fragPos: vec3f,
     @location(5) eye: vec3f,
+    @location(6) lightSpaceFragmentPos: vec4f,
 }
 @group(0) @binding(0)
 var<uniform> transform: array<mat4x4f, 1>;
@@ -24,6 +25,8 @@ var<uniform> textureTilling: vec2f;
 var<uniform> viewProjection: mat4x4f;
 @group(1) @binding(1)
 var<uniform> eye: vec3f;
+@group(1) @binding(2)
+var<uniform> lightSpaceProjectionView: mat4x4f;
 
 
 @vertex
@@ -35,6 +38,7 @@ fn materialVS(in: VSInput, @builtin(vertex_index) vid: u32, @builtin(instance_in
     out.normal = normalMatrix[iid] * in.normal;
     out.fragPos = (transform[iid] * vec4f(in.position, 1.0)).xyz;
     out.eye = eye;
+    out.lightSpaceFragmentPos = lightSpaceProjectionView * vec4f(out.fragPos, 1.0);
     return out;
 }
 struct AmbientLight{
@@ -70,6 +74,10 @@ var diffuseTexSampler: sampler;
 var<uniform> diffuseColor: vec4f;
 @group(2) @binding(3)
 var<uniform> shininess: f32;
+@group(2) @binding(4)
+var shadowTexture: texture_depth_2d;
+@group(2) @binding(5)
+var shadowSampler: sampler_comparison;
 
 @group(3) @binding(0)
 var<uniform> ambientLight: AmbientLight;
@@ -81,6 +89,15 @@ var<uniform> positionalLights: array<PointLight, 3>;
 
 @fragment
 fn materialFS(in: VSOutput) -> @location(0) vec4f{
+    // - SHADOWS
+    // Do a perspective divide
+    var shadowCoords = in.lightSpaceFragmentPos.xyz / in.lightSpaceFragmentPos.w;
+
+    // from [-1, 1] to [0, 1]
+    var shadowTextureCoords = shadowCoords.xy * 0.5 + 0.5;
+    shadowTextureCoords.y = 1 - shadowTextureCoords.y;
+
+    var shadow = textureSampleCompare(shadowTexture, shadowSampler, shadowTextureCoords, shadowCoords.z - 0.01);
 
 
     // Vector towards the eye
@@ -93,13 +110,13 @@ fn materialFS(in: VSOutput) -> @location(0) vec4f{
     var lightDir = normalize(-directionalLight.direction);
     var n = normalize(in.normal);
     var dotLight = max(dot(n, lightDir), 0);
-    lightAmount += directionalLight.color * directionalLight.intensity * dotLight;
+    lightAmount += directionalLight.color * directionalLight.intensity * dotLight * shadow;
 
     // SPECULAR LIGHT
     var halfVector = normalize(lightDir + toEye);
     var dotSpecular = max(dot(n, halfVector), 0.0);
     dotSpecular = pow(dotSpecular, shininess);
-    lightAmount += directionalLight.specularColor * dotSpecular * directionalLight.specularIntensity;
+    lightAmount += directionalLight.specularColor * dotSpecular * directionalLight.specularIntensity * shadow;
 
     // POINT LIGHT
 
@@ -112,13 +129,13 @@ fn materialFS(in: VSOutput) -> @location(0) vec4f{
         var attenuation = positionalLights[i].attenConstant + positionalLights[i].attenLinear * distance + positionalLights[i].attenQuadratic * distance * distance;
         attenuation = 1.0/ attenuation;
 
-        lightAmount += positionalLights[i].color * positionalLights[i].intensity * dotLight * attenuation;
+        lightAmount += positionalLights[i].color * positionalLights[i].intensity * dotLight * attenuation * shadow;
 
         // SPECULAR LIGHT
         halfVector = normalize(lightDir + toEye);
         dotSpecular = max(dot(n, halfVector), 0.0);
         dotSpecular = pow(dotSpecular, shininess);
-        lightAmount += positionalLights[i].specularColor * dotSpecular * positionalLights[i].specularIntensity;
+        lightAmount += positionalLights[i].specularColor * dotSpecular * positionalLights[i].specularIntensity * shadow;
 
     }
 

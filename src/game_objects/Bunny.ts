@@ -11,9 +11,13 @@ import {RenderPipeline} from "../pipelines/RenderPipeline.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import {Mat3x3} from "../math/Mat3x3.ts";
 import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
+import {ShadowRenderpipeline} from "../pipelines/ShadowRenderPipeline.ts";
+import type {ShadowCamera} from "../camera/ShadowCamera.ts";
 
 export class Bunny{
-    private pipeline: RenderPipeline;
+    public pipeline: RenderPipeline;
+    private shadowPipeline: ShadowRenderpipeline;
+
     private transfromBuffer: UniformBuffer;
     private normalMatrixBuffer: UniformBuffer;
 
@@ -27,16 +31,18 @@ export class Bunny{
 
     private angle = 0;
 
-    constructor(device : GPUDevice, camera: Camera,
+    constructor(device : GPUDevice, camera: Camera, shadowCamera: ShadowCamera,
                 texture: Texture2D, ambientLight: AmbientLight,
                 directionalLight: DirectionalLight, pointLights: PointLightsCollection) {
         this.transfromBuffer = new UniformBuffer(device, this.transfrom, "Bunny Transform");
         this.normalMatrixBuffer = new UniformBuffer(device, 16 * Float32Array.BYTES_PER_ELEMENT, "Bunny Normal Matrix");
-        this.pipeline = new RenderPipeline(device, camera, this.transfromBuffer,
-            this.normalMatrixBuffer, ambientLight, directionalLight, pointLights);
 
+        this.pipeline = new RenderPipeline(device, camera, shadowCamera, this.transfromBuffer, this.normalMatrixBuffer, ambientLight, directionalLight, pointLights);
 
         this.pipeline.diffuseTexture = texture;
+
+
+        this.shadowPipeline = new ShadowRenderpipeline(device, shadowCamera, this.transfromBuffer);
     }
 
     public update() {
@@ -59,7 +65,10 @@ export class Bunny{
     public draw(renderPassEncoder: GPURenderPassEncoder){
         this.pipeline.diffuseColor = this.color;
         this.pipeline.draw(renderPassEncoder, GeometryBuffersCollection.bunnyBuffers);
+    }
 
+    public drawShadows(renderPassEncode: GPURenderPassEncoder){
+        this.shadowPipeline.draw(renderPassEncode, GeometryBuffersCollection.bunnyBuffers);
     }
 
 }

@@ -1,0 +1,20 @@
+struct VSInput{
+    @location(0) position: vec3f,
+}
+
+struct VSOutput{
+    @builtin(position) position: vec4f,
+}
+@group(0) @binding(0)
+var<uniform> transform: array<mat4x4f, 1>; // or name it model matrix
+
+@group(1) @binding(0)
+var<uniform> viewProjection: mat4x4f;
+
+
+@vertex
+fn shadowVS(in: VSInput, @builtin(instance_index) iid: u32) -> VSOutput{
+    var out: VSOutput;
+    out.position = viewProjection * transform[iid] * vec4f(in.position, 1.0);
+    return out;
+}

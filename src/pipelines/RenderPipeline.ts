@@ -1,6 +1,6 @@
 import materialShader from "../shaders/MaterialShader.wgsl?raw";
 import type {GeometryBuffers} from "../attribute_buffer/GeometryBuffers.ts";
-import type {Texture2D} from "../texture/Texture2D.ts";
+import {Texture2D} from "../texture/Texture2D.ts";
 import {UniformBuffer} from "../uniform_buffers/UniformBuffer.ts";
 import {Vec2} from "../math/Vec2.ts";
 import {Color} from "../math/Color.ts";
@@ -8,6 +8,8 @@ import type {Camera} from "../camera/Camera.ts";
 import type {AmbientLight} from "../lights/AmbientLight.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import type {PointLightsCollection} from "../lights/PointLight.ts";
+import type {ShadowCamera} from "../camera/ShadowCamera.ts";
+
 export class RenderPipeline {
     private renderPipeline: GPURenderPipeline;
     private vertexGroupLayout:GPUBindGroupLayout; // slot 0
@@ -19,11 +21,18 @@ export class RenderPipeline {
     private materialBindGroup!: GPUBindGroup; // slot 2
     private lightBindGroup!: GPUBindGroup; // slot 3
 
-    private _diffuseTexture? : Texture2D;
+    private _diffuseTexture! : Texture2D;
+    private _shadowTexture!: Texture2D;
 
     public set diffuseTexture(texture: Texture2D){
         this._diffuseTexture = texture;
-        this.materialBindGroup = this.createMaterialBindGroup(texture);
+
+        this.materialBindGroup = this.createMaterialBindGroup(this._diffuseTexture, this._shadowTexture);
+
+    }
+    public set shadowTexture(texture: Texture2D){
+        this._shadowTexture = texture;
+        this.materialBindGroup = this.createMaterialBindGroup(this._diffuseTexture, this._shadowTexture);
     }
 
     private textureTillingBuffer: UniformBuffer;
@@ -52,6 +61,7 @@ export class RenderPipeline {
 
     constructor(private device: GPUDevice,
                 private camera: Camera,
+                private shadowCamera: ShadowCamera,
                 private transformsBuffer: UniformBuffer,
                 private normalMatrixBuffer: UniformBuffer,
                 ambientLight: AmbientLight,
@@ -60,6 +70,8 @@ export class RenderPipeline {
         this.textureTillingBuffer = new UniformBuffer(device, this._textureTilling, "texture Tilling buffer");
         this.diffuseColorBuffer = new UniformBuffer(device, this._diffuseColor, "diffuseColor Tilling buffer");
         this.shininessBuffer = new UniformBuffer(device, this._shininess, "shininess Tilling buffer");
+
+
         // position
         const bufferLayout : Array<GPUVertexBufferLayout> = [];
         bufferLayout.push({
@@ -138,6 +150,11 @@ export class RenderPipeline {
                     binding: 1,
                     visibility: GPUShaderStage.VERTEX,
                     buffer: {}
+                },
+                {
+                    binding: 2,
+                    visibility: GPUShaderStage.VERTEX,
+                    buffer: {}
                 }
             ]
         });
@@ -164,8 +181,26 @@ export class RenderPipeline {
                     visibility: GPUShaderStage.FRAGMENT,
                     buffer: {}
                 },
+                {
+                    binding: 4,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    texture: {
+                        sampleType: "depth"
+                    }
+                },
+                {
+                    binding: 5,
+                    visibility: GPUShaderStage.FRAGMENT,
+                    sampler: {
+                        type: "comparison"
+                    }
+                },
             ]
         });
+
+        this._diffuseTexture = Texture2D.createEmpty(device);
+        this._shadowTexture = Texture2D.createShadowTexture(device, 4096, 4096);
+        this.materialBindGroup = this.createMaterialBindGroup(this._diffuseTexture, this._shadowTexture);
 
         this.lightsGroupLayout = device.createBindGroupLayout({
             entries: [
@@ -222,9 +257,11 @@ export class RenderPipeline {
             depthStencil: {
                 depthWriteEnabled: true,
                 depthCompare: "less",
-                format: "depth24plus-stencil8"
+                format: "depth24plus-stencil8",
             }
         });
+
+
 
         this.vertexBindGroup = device.createBindGroup({
             layout: this.vertexGroupLayout,
@@ -265,6 +302,12 @@ export class RenderPipeline {
                         buffer: this.camera.eyeBuffer.buffer,
                     }
                 },
+                {
+                    binding: 2,
+                    resource: {
+                        buffer: this.shadowCamera.buffer.buffer,
+                    }
+                },
             ]
         });
 
@@ -296,7 +339,7 @@ export class RenderPipeline {
 
 
 
-    private createMaterialBindGroup(texture: Texture2D) {
+    private createMaterialBindGroup(texture: Texture2D, shadowTexture: Texture2D) {
         return this.device.createBindGroup({
             layout: this.materialBindGroupLayout,
             entries: [
@@ -319,6 +362,16 @@ export class RenderPipeline {
                     resource: {
                         buffer: this.shininessBuffer.buffer,
                     }
+                },
+                {
+                    binding: 4,
+                    resource: shadowTexture.texture.createView({
+                        aspect: "depth-only"
+                    })
+                },
+                {
+                    binding: 5,
+                    resource: shadowTexture.sampler
                 }
             ]
         });
