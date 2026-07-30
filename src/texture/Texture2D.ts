@@ -15,7 +15,7 @@ export class Texture2D {
 
     public static createEmpty(device: GPUDevice): Texture2D {
         const texture = new Texture2D(device);
-        texture.initializedFromData(new Uint8Array([255, 255, 255, 255]), 1, 1);
+        texture.initializedFromData(new Uint8Array([255, 255, 255, 255]).buffer, 1, 1);
         return texture;
     }
 

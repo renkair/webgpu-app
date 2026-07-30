@@ -1,4 +1,3 @@
-import {UnlitRenderpipeline} from "../pipelines/UnlitRenderpipeline.ts";
 import {UniformBuffer} from "../uniform_buffers/UniformBuffer.ts";
 import {Mat4x4} from "../math/Mat4x4.ts";
 import {Vec3} from "../math/Vec3.ts";

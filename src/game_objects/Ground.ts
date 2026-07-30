@@ -9,7 +9,7 @@ import type {AmbientLight} from "../lights/AmbientLight.ts";
 import {RenderPipeline} from "../pipelines/RenderPipeline.ts";
 import type {DirectionalLight} from "../lights/DirectionalLight.ts";
 import {Mat3x3} from "../math/Mat3x3.ts";
-import {type PointLight, PointLightsCollection} from "../lights/PointLight.ts";
+import {PointLightsCollection} from "../lights/PointLight.ts";
 import type {ShadowCamera} from "../camera/ShadowCamera.ts";
 
 export class Ground{

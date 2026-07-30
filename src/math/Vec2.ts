@@ -1,5 +1,3 @@
-import type {vec3} from "gl-matrix";
-
 export class Vec2 extends Float32Array{
     constructor(x: number = 0, y: number = 0) {
         super(2);

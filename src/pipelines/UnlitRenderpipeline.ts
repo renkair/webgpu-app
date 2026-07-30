@@ -4,8 +4,6 @@ import type {Texture2D} from "../texture/Texture2D.ts";
 import {UniformBuffer} from "../uniform_buffers/UniformBuffer.ts";
 import {Vec2} from "../math/Vec2.ts";
 import {Color} from "../math/Color.ts";
-import type {mat4} from "gl-matrix";
-import {Mat4x4} from "../math/Mat4x4.ts";
 import type {Camera} from "../camera/Camera.ts";
 export class UnlitRenderpipeline{
     private renderPipeline: GPURenderPipeline;

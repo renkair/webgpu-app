@@ -1,4 +1,3 @@
-import {UnlitRenderpipeline} from "./pipelines/UnlitRenderpipeline.ts";
 import {Utilities} from "./Utilities.ts";
 import {Texture2D} from "./texture/Texture2D.ts";
 import {Color} from "./math/Color.ts";

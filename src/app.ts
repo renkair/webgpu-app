@@ -19,12 +19,12 @@ export class App {
         this.forwards_amount = 0;
         this.right_amount = 0;
 
-        this.keyLabel = document.getElementById("key-label");
+        this.keyLabel = document.getElementById("key-label")!;
         $(document).on("keydown", (event) => {this.handle_keypress(event);});
         $(document).on("keyup", (event) => {this.handle_keyrelease(event);});
 
-        this.mouseXLabel = document.getElementById("mouse-x-label");
-        this.mouseYLabel = document.getElementById("mouse-y-label");
+        this.mouseXLabel = document.getElementById("mouse-x-label")!;
+        this.mouseYLabel = document.getElementById("mouse-y-label")!;
         this.canvas.onclick = () => {
             this.canvas.requestPointerLock();
         }

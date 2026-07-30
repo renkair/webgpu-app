@@ -1,6 +1,5 @@
 import shadowShader from "../shaders/ShadowShader.wgsl?raw";
 import type {GeometryBuffers} from "../attribute_buffer/GeometryBuffers.ts";
-import type {Texture2D} from "../texture/Texture2D.ts";
 import {UniformBuffer} from "../uniform_buffers/UniformBuffer.ts";
 import type {ShadowCamera} from "../camera/ShadowCamera.ts";
 export class ShadowRenderpipeline {
