@@ -199,7 +199,7 @@ export class RenderPipeline {
         });
 
         this._diffuseTexture = Texture2D.createEmpty(device);
-        this._shadowTexture = Texture2D.createShadowTexture(device, 4096, 4096);
+        this._shadowTexture = Texture2D.createShadowTexture(device, 2048, 2048);
         this.materialBindGroup = this.createMaterialBindGroup(this._diffuseTexture, this._shadowTexture);
 
         this.lightsGroupLayout = device.createBindGroupLayout({

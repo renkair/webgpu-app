@@ -56,19 +56,19 @@ export class App {
 
         if(event.code == "KeyW")
         {
-            this.forwards_amount = 0.02;
+            this.forwards_amount = 0.05;
         }
         if(event.code == "KeyS")
         {
-            this.forwards_amount = -0.02;
+            this.forwards_amount = -0.05;
         }
         if(event.code == "KeyA")
         {
-            this.right_amount = -0.02;
+            this.right_amount = -0.05;
         }
         if(event.code == "KeyD")
         {
-            this.right_amount = 0.02;
+            this.right_amount = 0.05;
         }
     }
 
@@ -101,5 +101,7 @@ export class App {
         // this.scene.spin_player(
         //     event.movementX / 5, -event.movementY / 5
         // );
+
+        this.renderer.spinCamera(/*pitch*/-event.movementY / 10, /*yaw*/-event.movementX / 10);
     }
 }

@@ -10,7 +10,7 @@ import {GeometryBuffersCollection} from "./attribute_buffer/GeometryBuffersColle
 import {Bunny} from "./game_objects/Bunny.ts";
 import {AmbientLight} from "./lights/AmbientLight.ts";
 import {DirectionalLight} from "./lights/DirectionalLight.ts";
-import {type PointLight, PointLightsCollection} from "./lights/PointLight.ts";
+import {PointLightsCollection} from "./lights/PointLight.ts";
 import {Wall} from "./game_objects/Wall.ts";
 import {Ground} from "./game_objects/Ground.ts";
 import {Skybox} from "./game_objects/Skybox.ts";
@@ -50,7 +50,6 @@ export class Renderer {
     ground: Ground;
     skybox: Skybox;
 
-    angle: number = 0;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -94,8 +93,8 @@ export class Renderer {
         transfromsBuffer.update(transfromMatrix, /*Buffer offset*/ 0*Mat4x4.BYTE_SIZE);
 
         // CAMERA
-        this.camera = new Camera(this.device, this.canvas.width/ this.canvas.height);
-        const view = Mat4x4.lookAt2(this.camera.eye, this.camera.target, this.camera.up);
+        this.camera = new Camera(this.device, this.canvas.width/ this.canvas.height, 0, 0);
+        const view = Mat4x4.lookAt2(this.camera.eye, this.camera.target, this.camera.getUp());
         const perspective = Mat4x4.perspective(45, 800/600, 0.01, 10);
         this.camera.projectionView = Mat4x4.multiply(perspective, view);
 
@@ -265,7 +264,7 @@ export class Renderer {
             stencilStoreOp: "discard"
         }
     }
-
+    // TODO: create a new class handle this.
     moveCamera(forwards_amount: number, right_amount: number){
         this.camera.eye = Vec3.add(this.camera.eye, new Vec3(this.camera.getForward().x * forwards_amount,
             this.camera.getForward().y * forwards_amount,
@@ -274,6 +273,16 @@ export class Renderer {
         this.camera.eye = Vec3.add(this.camera.eye, new Vec3(this.camera.getRight().x * right_amount,
             this.camera.getRight().y * right_amount,
             this.camera.getRight().z * right_amount));
+    }
+
+    spinCamera(pitch: number, yaw: number)
+    {
+        this.camera.pitch += pitch;
+        this.camera.yaw += yaw;
+        if(this.camera.pitch > 89.0)
+            this.camera.pitch =  89.0;
+        if(this.camera.pitch < -89.0)
+            this.camera.pitch = -89.0;
     }
 
 
